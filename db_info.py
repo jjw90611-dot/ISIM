@@ -580,9 +580,51 @@ QUESTIONS = [
     {"id": 415, "q": "안전보건 현황 공시 내용에 대해 설명해보세요?", "a": "1. 안전보건관리체제\n2. 산업재해 발생 현황\n3. 전년도 실적 및 해당연도 계획\n4. 안전보건 투자\n5. 재발방지 대책 및 이행계획"},
     {"id": 416, "q": "중대재해등의 원인조사에 관한 사항에 대해 말해보세요?", "a": "고용노동부장관은 중대재해 및 원인조사 필요 재해 발생 시 원인을 조사할 수 있으며, 공단/전문가에게 별도 실시하게 할 수 있습니다. 현장 훼손 및 조사 방해는 금지됩니다."},
     {"id": 417, "q": "재해조사보고서의 작성,공개에 관한 사항에 대해 말해보세요?", "a": "공단/전문가는 원인과 대책을 포함한 보고서를 장관에게 제출하며, 장관은 동종 재해 방지를 위해 공소 제기 이후(수사 대상 아닐 시 즉시) 보고서를 공개합니다."}
-
     
 ]
+
+# 2. 데이터를 예쁘게 화면에 그려주는 함수
+def render_qa_list(data):
+    for item in data:
+        # 질문(Q) 렌더링: 파란색 아이콘과 함께 큰 제목으로 표시
+        st.markdown(f"### 🔹 Q{item['id']}. {item['q']}")
+        
+        # 답변(A) 텍스트 전처리
+        raw_answer = item['a']
+        lines = raw_answer.split('\n')
+        formatted_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                formatted_lines.append("") # 빈 줄 유지
+                continue
+                
+            # 패턴 1: '1.', '2.' 로 시작하는 목록 -> 들여쓰기(&nbsp;) 및 번호 굵게 처리
+            if re.match(r'^\d+\.', line):
+                # 번호와 내용을 분리하여 번호만 굵게 만듭니다.
+                parts = line.split('.', 1)
+                num = parts[0]
+                content = parts[1].strip() if len(parts) > 1 else ""
+                formatted_lines.append(f"&nbsp;&nbsp;&nbsp;&nbsp;**{num}.** {content}")
+                
+            # 패턴 2: '*Tip' 으로 시작하는 팁 -> 마크다운 인용구(>)와 전구 아이콘으로 강조
+            elif line.startswith("*Tip"):
+                formatted_lines.append(f"\n> 💡 **{line}**\n")
+                
+            # 패턴 3: 일반 텍스트
+            else:
+                formatted_lines.append(line)
+        
+        # Streamlit에서 줄바꿈이 뭉개지지 않도록 각 줄 끝에 스페이스 2개("  \n") 추가
+        final_answer = "  \n".join(formatted_lines)
+        
+        # 답변 출력
+        st.markdown(final_answer, unsafe_allow_html=True)
+        
+        # 문항 사이에 회색 구분선 추가하여 가독성 확보
+        st.divider()
+
 
 # ==========================================
 # [사이드바 네비게이션]
