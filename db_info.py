@@ -20,12 +20,17 @@ def apply_modern_ui():
         font-style: normal;
     }
 
-    /* 2. 전체 폰트 적용 및 가독성 향상 (글자 크기 확대) */
+    /* 2. 전체 폰트 적용 (아이콘 제외) */
     html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
-        font-family: 'SeoulNamsanM', sans-serif !important;
-        font-size: 18px !important;
-        line-height: 1.7 !important;
-        color: #2C3E50;
+        font-family: 'SeoulNamsanM', sans-serif;
+        font-size: 18px; 
+        line-height: 1.7; 
+        color: #2C3E50; 
+    }
+
+    /* 🚨 핵심 해결책: Streamlit 기본 아이콘 폰트 보호 🚨 */
+    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
+        font-family: 'Material Symbols Rounded' !important;
     }
 
     /* 3. 전체 배경색 (깔끔한 라이트 그레이) */
@@ -87,6 +92,7 @@ def apply_modern_ui():
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 # 앱 시작 시 UI 적용
 apply_modern_ui()
