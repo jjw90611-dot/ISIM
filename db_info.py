@@ -728,8 +728,6 @@ elif menu == "🗣️ 모범답변 예시":
 # 5. 핵심 문제 DB
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
-    st.markdown("""
-    <h2><span style="background: linear-gradient(to top, #FFE400 50%, transparent 50%);">
     st.title("📚 핵심 문제 DB")
     st.write("수록된 전체 문제 리스트입니다.")
     
