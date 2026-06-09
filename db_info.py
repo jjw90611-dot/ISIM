@@ -21,6 +21,46 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+import re
+import streamlit as st
+
+def auto_format(raw_text):
+    """
+    마크다운 텍스트의 번호 매기기 패턴을 인식하여 
+    자동으로 들여쓰기와 줄바꿈을 적용하는 함수
+    """
+    lines = raw_text.strip().split('\n')
+    formatted = []
+    
+    for line in lines:
+        line = line.strip() # 기존의 불규칙한 띄어쓰기 제거
+        if not line:
+            formatted.append("") # 빈 줄은 그대로 유지
+            continue
+            
+        # 1. 대분류: '1. ', '2. ' (위아래 간격을 위해 앞에 엔터 추가)
+        if re.match(r'^\d+\.\s*', line):
+            formatted.append("\n" + line)
+            
+        # 2. 중분류: '가.', '나.' (기본 라인)
+        elif re.match(r'^[가-힣]\.\s*', line):
+            formatted.append(line)
+            
+        # 3. 소분류: '1)', '2)' (들여쓰기 4칸 적용)
+        elif re.match(r'^\d+\)\s*', line):
+            formatted.append("&nbsp;&nbsp;&nbsp;&nbsp;" + line)
+            
+        # 4. 세분류: '가)', '나)' (들여쓰기 8칸 적용)
+        elif re.match(r'^[가-힣]\)\s*', line):
+            formatted.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + line)
+            
+        # 그 외 일반 텍스트
+        else:
+            formatted.append(line)
+            
+    # Streamlit 마크다운에서 완벽한 줄바꿈을 위해 각 줄 끝에 스페이스 2개("  \n") 추가
+    return "  \n".join(formatted)
+
 
 # ==========================================
 # 🎨 2026 모던 UI & 서울남산체 디자인 적용
