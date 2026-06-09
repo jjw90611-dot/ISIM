@@ -5,6 +5,22 @@ import random
 # [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
 # ==========================================
 st.set_page_config(page_title="산업안전지도사 면접 마스터", page_icon="🏢", layout="wide")
+# ==========================================
+# [버튼 글자색 흰색으로 강제 변경하는 CSS]
+# ==========================================
+st.markdown("""
+    <style>
+    /* 파란색(Primary) 버튼의 글자색을 흰색으로 변경 */
+    div.stButton > button[kind="primary"] {
+        color: #FFFFFF !important;
+    }
+    /* 버튼 내부의 텍스트 요소에도 흰색 적용 */
+    div.stButton > button[kind="primary"] p {
+        color: #FFFFFF !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # ==========================================
 # 🎨 2026 모던 UI & 서울남산체 디자인 적용
