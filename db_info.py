@@ -1,4 +1,10 @@
 import streamlit as st
+import random
+
+# ==========================================
+# [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
+# ==========================================
+st.set_page_config(page_title="포스코퓨처엠 안전직무 면접 마스터", page_icon="🏢", layout="wide")
 
 # ==========================================
 # 🎨 2026 모던 UI & 서울남산체 디자인 적용
@@ -17,9 +23,9 @@ def apply_modern_ui():
     /* 2. 전체 폰트 적용 및 가독성 향상 (글자 크기 확대) */
     html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
         font-family: 'SeoulNamsanM', sans-serif !important;
-        font-size: 18px !important; /* 기본 글자 크기 키움 */
-        line-height: 1.7 !important; /* 줄 간격 넓힘 */
-        color: #2C3E50; /* 눈이 편안한 다크 그레이 */
+        font-size: 18px !important;
+        line-height: 1.7 !important;
+        color: #2C3E50;
     }
 
     /* 3. 전체 배경색 (깔끔한 라이트 그레이) */
@@ -30,7 +36,7 @@ def apply_modern_ui():
     /* 4. 면접관(Assistant) 메시지 스타일 - 포스코 블루 포인트 */
     [data-testid="stChatMessage"]:has([data-testid="stIconMaterial"]) {
         background-color: #FFFFFF;
-        border-left: 6px solid #005AAB; /* 포스코퓨처엠 블루 */
+        border-left: 6px solid #005AAB;
         border-radius: 12px;
         padding: 20px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -85,45 +91,8 @@ def apply_modern_ui():
 # 앱 시작 시 UI 적용
 apply_modern_ui()
 
-# --- 홈 화면 헤더 ---
-st.title("🏢 포스코퓨처엠 안전직무 가상 면접장")
-st.markdown("면접관이 당신의 답변을 기다리고 있습니다. 편안한 마음으로 답변해 주세요.")
-st.divider()
-
-# --- 면접관의 질문 (Assistant) ---
-with st.chat_message("assistant", avatar="👨‍💼"):
-    st.markdown("**[면접관]**")
-    st.markdown("반갑습니다. 지원자님. 긴장하지 마시고 편하게 답변해 주시면 됩니다.")
-    st.markdown("첫 번째 질문입니다. **안전보건관리규정 작성 시 포함되어야 할 주요 내용 4가지는 무엇인가요?**")
-
-# --- 지원자의 답변 입력 (User) ---
-user_answer = st.chat_input("답변을 입력하세요...")
-
-if user_answer:
-    # 내가 입력한 답변 표시
-    with st.chat_message("user", avatar="👤"):
-        st.markdown("**[지원자]**")
-        st.markdown(user_answer)
-        
-    # 면접관의 피드백 (모범 답안 등)
-    with st.chat_message("assistant", avatar="👨‍💼"):
-        st.markdown("**[면접관]**")
-        st.markdown("네, 답변 잘 들었습니다. 모범 답안은 다음과 같습니다.")
-        st.info("""
-        1. 안전 및 보건에 관한 관리조직과 그 직무에 관한 사항
-        2. 안전보건교육에 관한 사항
-        3. 작업장의 안전 및 보건 관리에 관한 사항
-        4. 사고 조사 및 대책 수립에 관한 사항
-        """)
-
-
 # ==========================================
-# [초기 설정] 페이지 세팅
-# ==========================================
-st.set_page_config(page_title="산업안전지도사(기계) 3차 면접 마스터", page_icon="⚙️", layout="wide")
-
-# ==========================================
-# [데이터베이스] 기출/예상문제 (1번 ~ 50번)
+# [데이터베이스] 기출/예상문제
 # ==========================================
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
@@ -560,26 +529,64 @@ QUESTIONS = [
     
 ]
 
+
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
-st.sidebar.title("⚙️ 기계안전 면접 마스터")
+st.sidebar.title("🏢 포스코퓨처엠 면접 마스터")
 st.sidebar.markdown("---")
 menu = st.sidebar.radio("메뉴를 선택하세요", 
-    ["🏠 들어가며 (인사말)", 
+    ["🏠 홈 (가상 면접장)", 
+     "📝 들어가며 (인사말)", 
      "📋 면접시험 상세정보", 
      "💡 실전면접 요령", 
      "🗣️ 모범답변 예시",
-     "📚 핵심 문제 DB (1~50번)", 
+     "📚 핵심 문제 DB", 
      "🎤 AI 실전 모의면접"]
 )
 st.sidebar.markdown("---")
 st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합격입니다. 두괄식으로 핵심 키워드를 먼저 말하는 연습을 하세요!")
 
 # ==========================================
+# 0. 홈 (가상 면접장)
+# ==========================================
+if menu == "🏠 홈 (가상 면접장)":
+    st.title("🏢 포스코퓨처엠 안전직무 가상 면접장")
+    st.markdown("면접관이 당신의 답변을 기다리고 있습니다. 편안한 마음으로 답변해 주세요.")
+    st.divider()
+
+    # 대화 기록을 저장하여 화면이 새로고침 되어도 대화가 유지되도록 설정
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [
+            {"role": "assistant", "content": "반갑습니다. 지원자님. 긴장하지 마시고 편하게 답변해 주시면 됩니다.\n\n첫 번째 질문입니다. **안전보건관리규정 작성 시 포함되어야 할 주요 내용 4가지는 무엇인가요?**"}
+        ]
+
+    # 이전 대화 내용 출력
+    for msg in st.session_state.chat_history:
+        avatar = "👨‍💼" if msg["role"] == "assistant" else "👤"
+        with st.chat_message(msg["role"], avatar=avatar):
+            st.markdown(f"**[{'면접관' if msg['role'] == 'assistant' else '지원자'}]**")
+            st.markdown(msg["content"])
+
+    # 지원자의 답변 입력
+    if user_answer := st.chat_input("답변을 입력하세요..."):
+        # 1. 내 답변 화면에 추가
+        st.session_state.chat_history.append({"role": "user", "content": user_answer})
+        with st.chat_message("user", avatar="👤"):
+            st.markdown("**[지원자]**")
+            st.markdown(user_answer)
+            
+        # 2. 면접관의 피드백 화면에 추가
+        feedback = "네, 답변 잘 들었습니다. 모범 답안은 다음과 같습니다.\n\n1. 안전 및 보건에 관한 관리조직과 그 직무에 관한 사항\n2. 안전보건교육에 관한 사항\n3. 작업장의 안전 및 보건 관리에 관한 사항\n4. 사고 조사 및 대책 수립에 관한 사항"
+        st.session_state.chat_history.append({"role": "assistant", "content": feedback})
+        with st.chat_message("assistant", avatar="👨‍💼"):
+            st.markdown("**[면접관]**")
+            st.markdown(feedback)
+
+# ==========================================
 # 1. 들어가며
 # ==========================================
-if menu == "🏠 들어가며 (인사말)":
+elif menu == "📝 들어가며 (인사말)":
     st.title("🎯 들어가며")
     st.markdown("""
     안녕하세요! 생각하는 기계안전 **‘마침표’**입니다.
@@ -701,9 +708,9 @@ elif menu == "🗣️ 모범답변 예시":
 # ==========================================
 # 5. 핵심 문제 DB
 # ==========================================
-elif menu == "📚 핵심 문제 DB (1~50번)":
-    st.title("📚 핵심 문제 DB (Part 1: 1~50번)")
-    st.write("문서에 수록된 417개의 문제 중 1번부터 50번까지의 내용입니다.")
+elif menu == "📚 핵심 문제 DB":
+    st.title("📚 핵심 문제 DB")
+    st.write("수록된 전체 문제 리스트입니다.")
     
     search_query = st.text_input("🔍 문제 검색 (키워드를 입력하세요)")
     
@@ -734,4 +741,3 @@ elif menu == "🎤 AI 실전 모의면접":
     if st.button("모범 답안 확인하기"):
         st.markdown("### 💡 모범 답안")
         st.success(st.session_state.current_q['a'])
-
