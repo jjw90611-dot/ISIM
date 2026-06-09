@@ -1,5 +1,121 @@
 import streamlit as st
-import random
+
+# ==========================================
+# 🎨 2026 모던 UI & 서울남산체 디자인 적용
+# ==========================================
+def apply_modern_ui():
+    st.markdown("""
+    <style>
+    /* 1. 서울남산체 웹 폰트 불러오기 */
+    @font-face {
+        font-family: 'SeoulNamsanM';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SeoulNamsanM.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    /* 2. 전체 폰트 적용 및 가독성 향상 (글자 크기 확대) */
+    html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
+        font-family: 'SeoulNamsanM', sans-serif !important;
+        font-size: 18px !important; /* 기본 글자 크기 키움 */
+        line-height: 1.7 !important; /* 줄 간격 넓힘 */
+        color: #2C3E50; /* 눈이 편안한 다크 그레이 */
+    }
+
+    /* 3. 전체 배경색 (깔끔한 라이트 그레이) */
+    .stApp {
+        background-color: #F8F9FA;
+    }
+
+    /* 4. 면접관(Assistant) 메시지 스타일 - 포스코 블루 포인트 */
+    [data-testid="stChatMessage"]:has([data-testid="stIconMaterial"]) {
+        background-color: #FFFFFF;
+        border-left: 6px solid #005AAB; /* 포스코퓨처엠 블루 */
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+
+    /* 5. 지원자(User) 메시지 스타일 - 부드러운 그린 포인트 */
+    [data-testid="stChatMessage"]:has(img) {
+        background-color: #F0F7FF;
+        border-right: 6px solid #4CAF50;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+
+    /* 6. 모던한 버튼 디자인 */
+    .stButton > button {
+        background-color: #005AAB !important;
+        color: #FFFFFF !important;
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 10px 24px !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 6px rgba(0, 90, 171, 0.2) !important;
+    }
+    .stButton > button:hover {
+        background-color: #003F7A !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 90, 171, 0.4) !important;
+    }
+
+    /* 7. 제목 스타일링 */
+    h1, h2, h3 {
+        color: #1A252F !important;
+        font-weight: bold !important;
+        letter-spacing: -0.5px;
+    }
+    
+    /* 8. 구분선 모던화 */
+    hr {
+        border: 0;
+        height: 1px;
+        background: #E0E0E0;
+        margin: 30px 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 앱 시작 시 UI 적용
+apply_modern_ui()
+
+# --- 홈 화면 헤더 ---
+st.title("🏢 포스코퓨처엠 안전직무 가상 면접장")
+st.markdown("면접관이 당신의 답변을 기다리고 있습니다. 편안한 마음으로 답변해 주세요.")
+st.divider()
+
+# --- 면접관의 질문 (Assistant) ---
+with st.chat_message("assistant", avatar="👨‍💼"):
+    st.markdown("**[면접관]**")
+    st.markdown("반갑습니다. 지원자님. 긴장하지 마시고 편하게 답변해 주시면 됩니다.")
+    st.markdown("첫 번째 질문입니다. **안전보건관리규정 작성 시 포함되어야 할 주요 내용 4가지는 무엇인가요?**")
+
+# --- 지원자의 답변 입력 (User) ---
+user_answer = st.chat_input("답변을 입력하세요...")
+
+if user_answer:
+    # 내가 입력한 답변 표시
+    with st.chat_message("user", avatar="👤"):
+        st.markdown("**[지원자]**")
+        st.markdown(user_answer)
+        
+    # 면접관의 피드백 (모범 답안 등)
+    with st.chat_message("assistant", avatar="👨‍💼"):
+        st.markdown("**[면접관]**")
+        st.markdown("네, 답변 잘 들었습니다. 모범 답안은 다음과 같습니다.")
+        st.info("""
+        1. 안전 및 보건에 관한 관리조직과 그 직무에 관한 사항
+        2. 안전보건교육에 관한 사항
+        3. 작업장의 안전 및 보건 관리에 관한 사항
+        4. 사고 조사 및 대책 수립에 관한 사항
+        """)
+
 
 # ==========================================
 # [초기 설정] 페이지 세팅
