@@ -561,7 +561,7 @@ menu = st.sidebar.radio(
 
 # 메인 화면 타이틀
 if menu == "🏠 홈 (가상 면접장)":
-    st.title("🏢 산업안전지도사 가상 면접장")
+    st.title("🏢 산업안전지도사 ")
 
 st.sidebar.markdown("---")
 st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합격입니다. 두괄식으로 핵심 키워드를 먼저 말하는 연습을 하세요!")
