@@ -748,7 +748,7 @@ elif menu == "🎤 AI 실전 모의면접":
     if 'current_q' not in st.session_state:
         st.session_state.current_q = random.choice(QUESTIONS)
         
-    if st.button("🔄 새로운 문제 뽑기"):
+    if st.button("🔄 새로운 문제 뽑기", type="primary"):
         st.session_state.current_q = random.choice(QUESTIONS)
         
     st.markdown("---")
@@ -757,6 +757,6 @@ elif menu == "🎤 AI 실전 모의면접":
     
     user_answer = st.text_area("당신의 답변을 입력하세요 (핵심 키워드 위주로 작성):", height=150)
     
-    if st.button("모범 답안 확인하기"):
+    if st.button("💡 모범답안 확인하기", type="primary"):
         st.markdown("### 💡 모범 답안")
         st.success(st.session_state.current_q['a'])
