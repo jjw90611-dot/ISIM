@@ -541,8 +541,66 @@ QUESTIONS = [
     {"id": 416, "q": "중대재해등의 원인조사에 관한 사항에 대해 말해보세요?", "a": "고용노동부장관은 중대재해 및 원인조사 필요 재해 발생 시 원인을 조사할 수 있으며, 공단/전문가에게 별도 실시하게 할 수 있습니다. 현장 훼손 및 조사 방해는 금지됩니다."},
     {"id": 417, "q": "재해조사보고서의 작성,공개에 관한 사항에 대해 말해보세요?", "a": "공단/전문가는 원인과 대책을 포함한 보고서를 장관에게 제출하며, 장관은 동종 재해 방지를 위해 공소 제기 이후(수사 대상 아닐 시 즉시) 보고서를 공개합니다."}
 
-    
 ]
+
+
+# ==========================================
+# [메인 화면 UI] 탭 구성 (텍스트 / 음성)
+# ==========================================
+st.title("📚 산업안전지도사 면접 핵심 DB")
+
+tab_text, tab_audio = st.tabs(["📝 텍스트로 보기", "🎧 음성으로 듣기 (TTS)"])
+
+# ------------------------------------------
+# [탭 1] 텍스트 출력 화면
+# ------------------------------------------
+with tab_text:
+    st.subheader("📖 전체 문제 목록")
+    for item in QUESTIONS:
+        st.markdown(f"**Q{item['id']}. {item['q']}**")
+        st.markdown(f"> {item['a']}")
+        st.divider()
+
+# ------------------------------------------
+# [탭 2] 음성 듣기 화면
+# ------------------------------------------
+with tab_audio:
+    st.subheader("🎧 핵심 문제 음성 플레이어")
+    st.info("💡 질문은 남성, 답변은 여성의 목소리로 재생됩니다.")
+    
+    # 1. 전체 듣기 기능
+    st.markdown("### 🎵 전체 연속 듣기")
+    all_audio_path = "audio_files/all_qna.mp3"
+    if os.path.exists(all_audio_path):
+        st.audio(all_audio_path, format="audio/mp3")
+    else:
+        st.button("▶️ 전체 문제 연속 재생 (파일 준비 중)", disabled=True, use_container_width=True)
+    
+    st.divider()
+    
+    # 2. 개별 문제 듣기 기능
+    st.markdown("### 🔢 번호별 선택 듣기")
+    
+    selected_id = st.selectbox(
+        "듣고 싶은 문제 번호를 선택하세요:", 
+        options=[item["id"] for item in QUESTIONS],
+        format_func=lambda x: f"문제 {x}번"
+    )
+    
+    # 선택된 문제 찾기
+    selected_item = next(item for item in QUESTIONS if item["id"] == selected_id)
+    
+    st.markdown(f"**Q. {selected_item['q']}**")
+    st.markdown(f"> A. {selected_item['a']}")
+    
+    # 해당 문제의 오디오 파일 재생 (audio_files 폴더 내에 qna_1.mp3 형태로 저장되어 있어야 함)
+    audio_file_path = f"audio_files/qna_{selected_id}.mp3"
+    
+    if os.path.exists(audio_file_path):
+        st.audio(audio_file_path, format="audio/mp3")
+    else:
+        st.warning(f"⚠️ 'audio_files/qna_{selected_id}.mp3' 파일이 아직 생성되지 않았습니다. make_audio.py를 먼저 실행해주세요.")
+
 
 # ==========================================
 # [사이드바 네비게이션]
