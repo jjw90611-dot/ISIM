@@ -135,7 +135,6 @@ apply_modern_ui()
 # ==========================================
 # [데이터베이스] 기출/예상문제
 # ==========================================
-# 선생님, 아래 대괄호 [ ] 안에 417개의 문제 데이터를 붙여넣어 주세요!
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
     {"id": 2, "q": "산업안전지도사 기계분야의 직무에 대해 말해보세요?", "a": "산안법 제145조 제1항에 따라 등록한 기계안전지도사의 업무범위는\n1. 유해위험방지계획서, 안전보건개선계획서, 공정안전보고서, 기계기구설비의 작업계획서 및 MSDS 작성 지도\n2. 정전기·전자파로 인한 재해예방, 자동화 및 자동제어설비, 방폭전기설비 및 전력시스템 등 기술지도\n3. 전기, 기계기구설비, 화학설비 및 공정에 대한 설계·시공·배치·유지보수에 관한 안전성평가 및 기술지도\n4. 인화성가스, 액체, 폭발성물질, 급성독성 물질 및 방폭설비 등에 관한 안전성평가 및 기술지도\n5. 크레인 등 기계·기구, 전기작업의 안전성평가\n6. 그 밖의 교육 또는 기술지도 업무\n\n*Tip : 유.정.전.인.크"},
@@ -563,6 +562,7 @@ QUESTIONS = [
 
     
 ]
+
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
@@ -789,13 +789,12 @@ elif menu == "🗣️ 모범답변 예시":
 
 
 # ==========================================
-# 5. 핵심 문제 DB (여기에 노래방 모드 추가됨!)
+# 5. 핵심 문제 DB (동영상/노래방 모드 + 파트 분할)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
     
-    # 탭 2개로 분리 (리스트 보기 / 노래방 모드)
-    tab_list, tab_audio = st.tabs(["📜 문제 리스트", "🎧 연속 재생 (노래방 모드)"])
+    tab_list, tab_audio = st.tabs(["📜 문제 리스트", "📺 동영상 재생 모드 (설거지용)"])
     
     # --- 탭 1: 기존 문제 리스트 ---
     with tab_list:
@@ -807,30 +806,60 @@ elif menu == "📚 핵심 문제 DB":
                 with st.expander(f"Q{q['id']}. {q['q']}"):
                     st.markdown(f"**[답변]**\n\n{q['a']}")
 
-    # --- 탭 2: 노래방 모드 (429 에러 방어 로직 포함) ---
+    # --- 탭 2: 동영상 재생 모드 (까만 바탕 + 흰 글씨 + 파트 분할) ---
     with tab_audio:
-        st.subheader("🎧 핵심 문제 연속 재생")
-        st.markdown("재생 버튼을 누르면 문제가 순차적으로 재생됩니다. (구글 API 제한 시 자막만 재생됩니다.)")
+        st.subheader("📺 핵심 문제 동영상 재생 모드")
+        st.markdown("설거지나 이동 중에 편하게 듣고 볼 수 있는 모드입니다. **구글 API 차단을 막기 위해 10문제씩 나누어 재생**합니다.")
         
-        if st.button("▶️ 연속 재생 시작"):
-            if not QUESTIONS:
-                st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
-            else:
+        if not QUESTIONS:
+            st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
+        else:
+            # 10문제씩 파트 나누기
+            chunk_size = 10
+            total_q = len(QUESTIONS)
+            parts = []
+            for i in range(0, total_q, chunk_size):
+                start = i + 1
+                end = min(i + chunk_size, total_q)
+                parts.append(f"파트 {i//chunk_size + 1} ({start}번 ~ {end}번)")
+            
+            # 파트 선택 드롭다운
+            selected_part = st.selectbox("🎧 재생할 파트를 선택하세요", parts)
+            
+            if st.button("▶️ 선택한 파트 재생 시작"):
+                # 선택한 파트의 문제만 추출
+                part_idx = parts.index(selected_part)
+                start_idx = part_idx * chunk_size
+                end_idx = start_idx + chunk_size
+                current_questions = QUESTIONS[start_idx:end_idx]
+                
                 subtitle_area = st.empty()
                 audio_area = st.empty()
                 
-                st.success("연속 재생을 시작합니다!")
+                st.success(f"{selected_part} 재생을 시작합니다!")
                 
-                for q in QUESTIONS:
+                for q in current_questions:
                     text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
                     
-                    # 자막 출력 (선생님 UI 톤앤매너에 맞춘 포스코 블루 색상)
+                    # 📺 까만 바탕에 흰색 글씨 (동영상 스타일 UI)
                     subtitle_area.markdown(
                         f"""
-                        <div style="padding: 20px; border: 2px solid #005AAB; border-radius: 10px; text-align: center; background-color: #ffffff;">
-                            <h3 style="color: #005AAB; margin-bottom: 10px;">문제 {q['id']}번</h3>
-                            <p style="font-size: 22px; color: #333;"><b>Q: {q['q']}</b></p>
-                            <p style="font-size: 18px; color: #555;">A: {q['a']}</p>
+                        <div style="
+                            padding: 40px 20px; 
+                            border-radius: 15px; 
+                            text-align: center; 
+                            background-color: #111111; 
+                            color: #FFFFFF; 
+                            min-height: 350px; 
+                            display: flex; 
+                            flex-direction: column; 
+                            justify-content: center;
+                            box-shadow: 0px 10px 20px rgba(0,0,0,0.5);
+                        ">
+                            <h3 style="color: #4CAF50; margin-bottom: 20px; font-size: 24px;">📝 문제 {q['id']}번</h3>
+                            <p style="font-size: 28px; font-weight: bold; line-height: 1.5; color: #FFFFFF;">Q: {q['q']}</p>
+                            <hr style="border: 1px solid #333333; width: 80%; margin: 20px auto;">
+                            <p style="font-size: 22px; line-height: 1.6; color: #DDDDDD;">A: {q['a']}</p>
                         </div>
                         """, 
                         unsafe_allow_html=True
@@ -846,14 +875,14 @@ elif menu == "📚 핵심 문제 DB":
                         # 정상적으로 음성이 생성된 경우 재생
                         audio_area.audio(audio_bytes, format="audio/mp3", autoplay=True)
                     else:
-                        # 429 에러 등으로 음성이 막힌 경우 (에러 뿜지 않고 경고창만 띄움)
-                        audio_area.warning("⚠️ 구글 음성 API 요청 제한(429 Error)으로 인해 일시적으로 음성이 나오지 않습니다. 자막으로 진행합니다.")
+                        # 429 에러 등으로 음성이 막힌 경우
+                        audio_area.warning("⚠️ 현재 구글 음성 API가 일시적으로 차단되었습니다. (1~2시간 후 또는 와이파이 변경 시 해제됨) 자막으로 진행합니다.")
                         
                     # 음성 길이나 자막 읽을 시간만큼 대기 후 다음 문제로 넘어감
                     time.sleep(wait_time)
                     
                 st.balloons()
-                st.success("모든 문제 재생이 완료되었습니다!")
+                st.success(f"{selected_part} 재생이 완료되었습니다! 다음 파트를 선택해주세요.")
 
 # ==========================================
 # 6. AI 실전 모의면접
