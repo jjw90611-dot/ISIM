@@ -1,6 +1,8 @@
 import streamlit as st
 import random
 import os
+from gtts import gTTS  # 실시간 음성 생성을 위해 추가
+import io              # 메모리에서 음성을 재생하기 위해 추가
 
 # ==========================================
 # [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언! 중복 선언 제거)
@@ -779,23 +781,10 @@ elif menu == "📚 핵심 문제 DB":
         else:
             st.warning("데이터가 없습니다. 코드 상단의 QUESTIONS 배열에 데이터를 넣어주세요.")
 
-    # --- [탭 2] 음성 듣기 화면 ---
+    # --- [탭 2] 음성 듣기 화면 (실시간 생성 방식) ---
     with tab_audio:
-        st.subheader("🎧 핵심 문제 음성 플레이어")
-        st.info("💡 질문은 남성, 답변은 여성의 목소리로 재생됩니다.")
-        
-        # 전체 듣기 기능
-        st.markdown("### 🎵 전체 연속 듣기")
-        all_audio_path = "audio_files/all_qna.mp3"
-        if os.path.exists(all_audio_path):
-            st.audio(all_audio_path, format="audio/mp3")
-        else:
-            st.button("▶️ 전체 문제 연속 재생 (파일 준비 중)", disabled=True, use_container_width=True)
-        
-        st.divider()
-        
-        # 개별 문제 듣기 기능
-        st.markdown("### 🔢 번호별 선택 듣기")
+        st.subheader("🎧 핵심 문제 음성 플레이어 (실시간 생성)")
+        st.info("💡 파일 업로드 제한으로 인해, 텍스트를 즉석에서 음성으로 변환하여 들려줍니다. (구글 기본 목소리)")
         
         if QUESTIONS:
             selected_id = st.selectbox(
@@ -810,13 +799,24 @@ elif menu == "📚 핵심 문제 DB":
             st.markdown(f"**Q. {selected_item['q']}**")
             st.markdown(f"> A. {selected_item['a']}")
             
-            # 해당 문제의 오디오 파일 재생
-            audio_file_path = f"audio_files/qna_{selected_id}.mp3"
-            
-            if os.path.exists(audio_file_path):
-                st.audio(audio_file_path, format="audio/mp3")
-            else:
-                st.warning(f"⚠️ 'audio_files/qna_{selected_id}.mp3' 파일이 아직 생성되지 않았습니다. 구글 코랩에서 파일을 생성 후 업로드 해주세요.")
+            # 버튼을 누르면 실시간으로 음성을 생성하여 재생
+            if st.button("▶️ 이 문제 음성으로 듣기", type="primary"):
+                with st.spinner("음성을 생성 중입니다... 잠시만 기다려주세요."):
+                    try:
+                        # 읽어줄 텍스트 만들기
+                        text_to_read = f"질문입니다. {selected_item['q']} 답변입니다. {selected_item['a']}"
+                        
+                        # gTTS를 이용해 실시간으로 음성 데이터 생성
+                        tts = gTTS(text=text_to_read, lang='ko')
+                        audio_fp = io.BytesIO()
+                        tts.write_to_fp(audio_fp)
+                        audio_fp.seek(0)
+                        
+                        # 생성된 음성 재생
+                        st.audio(audio_fp, format="audio/mp3")
+                        st.success("음성 생성이 완료되었습니다. 재생 버튼을 눌러주세요!")
+                    except Exception as e:
+                        st.error(f"음성 생성 중 오류가 발생했습니다: {e}")
         else:
             st.warning("데이터가 없습니다. 코드 상단의 QUESTIONS 배열에 데이터를 넣어주세요.")
 
