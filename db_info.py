@@ -787,6 +787,7 @@ elif menu == "🗣️ 모범답변 예시":
 
 
 
+
 # ==========================================
 # 5. 핵심 문제 DB (모바일 완벽 호환 + 기본 음성 플레이어 탑재)
 # ==========================================
@@ -795,7 +796,6 @@ elif menu == "📚 핵심 문제 DB":
     
     tab_list, tab_audio = st.tabs(["📜 문제 리스트 (전체 펼침)", "📺 동영상 재생 모드 (설거지용)"])
     
-    # --- 탭 1: 문제 리스트 ---
     with tab_list:
         st.write("수록된 전체 문제 리스트입니다. 스크롤을 내려 모든 문제를 바로 확인할 수 있습니다.")
         search_query = st.text_input("🔍 문제 검색 (키워드를 입력하세요)")
@@ -806,7 +806,6 @@ elif menu == "📚 핵심 문제 DB":
                 st.info(f"**[답변]**\n\n{q['a']}")
                 st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- 탭 2: 동영상 재생 모드 (모바일 전용 플레이어) ---
     with tab_audio:
         st.subheader("📺 모바일 최적화 동영상 재생 모드")
         st.markdown("휴대폰 화면이 켜진 상태에서 **아래의 재생 버튼을 누르면 끊김 없이 연속 재생**됩니다.")
@@ -823,17 +822,12 @@ elif menu == "📚 핵심 문제 DB":
             start_idx = part_idx * chunk_size
             current_questions = QUESTIONS[start_idx:start_idx + chunk_size]
             
-            # JS로 넘길 데이터 가공 (띄어쓰기 및 줄바꿈 완벽 교정)
             js_questions = []
             for q in current_questions:
                 ans = q['a']
-                # 1. 탭이나 연속된 공백을 하나로 압축
                 ans = re.sub(r'[ \t]+', ' ', ans)
-                # 2. 번호(1. 2.) 앞에 줄바꿈 강제 추가
                 ans = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', ans).strip()
-                # 3. HTML용 줄바꿈 처리
                 formatted_a = ans.replace('\n', '<br>')
-                # 4. TTS 읽기용 텍스트 (특수기호 제거)
                 plain_a = re.sub(r'[*_~]', '', ans)
                 
                 js_questions.append({
@@ -845,7 +839,7 @@ elif menu == "📚 핵심 문제 DB":
             
             questions_json = json.dumps(js_questions, ensure_ascii=False)
             
-            # 🚨 [핵심] 모바일 자동재생 및 속도 조절을 지원하는 HTML/JS 플레이어 🚨
+            # 🚨 [수정됨] 모바일 브라우저 호환성을 100%로 끌어올린 HTML/JS 플레이어 🚨
             html_player = f"""
             <!DOCTYPE html>
             <html>
@@ -855,7 +849,7 @@ elif menu == "📚 핵심 문제 DB":
                 .player-box {{ background: #fff; border-radius: 15px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; min-height: 450px; display: flex; flex-direction: column; justify-content: center; border: 2px solid #E0E0E0; }}
                 .btn-play {{ background: #005AAB; color: #fff; border: none; padding: 20px 40px; font-size: 22px; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,90,171,0.3); transition: 0.3s; }}
                 .btn-play:active {{ transform: scale(0.95); }}
-                .q-title {{ color: #005AAB; font-size: 24px; margin-bottom: 15px; }}
+                .q-title {{ color: #005AAB; font-size: 24px; margin-bottom: 15px; font-weight: bold; }}
                 .q-text {{ font-size: 28px; font-weight: bold; color: #1A252F; word-break: keep-all; line-height: 1.4; }}
                 .a-text {{ font-size: 22px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all; margin-top: 20px; }}
                 .label-a {{ color: #D32F2F; font-weight: bold; }}
@@ -872,19 +866,19 @@ elif menu == "📚 핵심 문제 DB":
                     const questions = {questions_json};
                     let currentIndex = 0;
 
-                    // 기기 내장 한국어 기본 음성 찾기 (남성 선호, 없으면 기본)
                     function getKoreanVoice() {{
                         const voices = window.speechSynthesis.getVoices();
                         const koVoices = voices.filter(v => v.lang.includes('ko'));
-                        
                         let voice = koVoices.find(v => v.name.includes('Male') || v.name.includes('남성'));
                         if (!voice && koVoices.length > 0) voice = koVoices[0];
-                        
                         return voice;
                     }}
 
                     function startPlay() {{
-                        if (questions.length === 0) return;
+                        if (questions.length === 0) {{
+                            alert("재생할 문제가 없습니다.");
+                            return;
+                        }}
                         currentIndex = 0;
                         window.speechSynthesis.cancel(); // 기존 음성 초기화
                         playNextQuestion();
@@ -901,17 +895,18 @@ elif menu == "📚 핵심 문제 DB":
 
                         const q = questions[currentIndex];
                         
-                        // 화면 업데이트
+                        // 화면 업데이트 (재생 중 표시 추가)
                         document.getElementById('app').innerHTML = `
-                            <div class="q-title">📝 문제 ${{q.id}}번</div>
+                            <div class="q-title">📝 문제 ${{q.id}}번 (재생 중 🔊)</div>
                             <div class="q-text">Q: ${{q.q}}</div>
                             <hr>
                             <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
                         `;
 
-                        // 모바일 끊김 방지를 위해 문장을 마침표/줄바꿈 기준으로 쪼개서 큐(Queue)에 넣음
                         const fullText = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
-                        const chunks = fullText.split(/(?<=[.!?\n])/); 
+                        
+                        // 🚨 [핵심 수정] 아이폰/사파리에서 에러를 뿜는 Lookbehind 정규식 제거하고 안전한 방식으로 분할
+                        const chunks = fullText.match(/[^.!?\n]+[.!?\n]*/g) || [fullText];
                         let chunkIndex = 0;
 
                         function speakNextChunk() {{
@@ -930,9 +925,7 @@ elif menu == "📚 핵심 문제 DB":
 
                             const utterance = new SpeechSynthesisUtterance(text);
                             utterance.lang = 'ko-KR';
-                            
-                            // 💡 속도 조절: 1.15배속으로 약간 빠르게 설정
-                            utterance.rate = 1.15; 
+                            utterance.rate = 1.15; // 1.15배속
                             
                             const voice = getKoreanVoice();
                             if (voice) utterance.voice = voice;
@@ -954,17 +947,13 @@ elif menu == "📚 핵심 문제 DB":
                         speakNextChunk();
                     }}
 
-                    // 크롬/사파리 음성 목록 사전 로드
                     window.speechSynthesis.onvoiceschanged = getKoreanVoice;
                 </script>
             </body>
             </html>
             """
             
-            # Streamlit에 HTML 플레이어 삽입 (높이를 넉넉하게 주어 스크롤 방지)
             components.html(html_player, height=700, scrolling=True)
-
-
 # ==========================================
 # 6. AI 실전 모의면접
 # ==========================================
