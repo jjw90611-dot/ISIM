@@ -784,7 +784,7 @@ elif menu == "🗣️ 모범답변 예시":
 
 
 # ==========================================
-# 5. 핵심 문제 DB (전체 펼침 + 동영상 모드)
+# 5. 핵심 문제 DB (전체 펼침 + 동영상 모드 가독성 개선)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
@@ -800,12 +800,11 @@ elif menu == "📚 핵심 문제 DB":
         
         for q in QUESTIONS:
             if search_query in q['q'] or search_query in q['a']:
-                # expander 대신 markdown과 info 박스를 사용하여 항상 펼쳐진 상태로 렌더링
                 st.markdown(f"#### 📝 Q{q['id']}. {q['q']}")
                 st.info(f"**[답변]**\n\n{q['a']}")
                 st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- 탭 2: 동영상 재생 모드 (밝은 테마 + 파트 분할) ---
+    # --- 탭 2: 동영상 재생 모드 (가독성 극대화) ---
     with tab_audio:
         st.subheader("📺 핵심 문제 동영상 재생 모드")
         st.markdown("설거지나 이동 중에 편하게 듣고 볼 수 있는 모드입니다. **구글 API 차단을 막기 위해 10문제씩 나누어 재생**합니다.")
@@ -826,7 +825,6 @@ elif menu == "📚 핵심 문제 DB":
             selected_part = st.selectbox("🎧 재생할 파트를 선택하세요", parts)
             
             if st.button("▶️ 선택한 파트 재생 시작", type="primary"):
-                # 선택한 파트의 문제만 추출
                 part_idx = parts.index(selected_part)
                 start_idx = part_idx * chunk_size
                 end_idx = start_idx + chunk_size
@@ -840,13 +838,24 @@ elif menu == "📚 핵심 문제 DB":
                 for q in current_questions:
                     text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
                     
-                    # 📺 밝고 깔끔한 동영상 스타일 UI
+                    # 💡 가독성 개선: 띄어쓰기 및 줄바꿈 완벽 교정
+                    formatted_answer = q['a']
+                    
+                    # 1. 탭(\t)이나 여러 개의 연속된 공백을 하나의 공백으로 변환 (번호 뒤 넓은 공백 문제 해결)
+                    formatted_answer = re.sub(r'[ \t]+', ' ', formatted_answer)
+                    
+                    # 2. 번호(1. 2. 등) 앞에 줄바꿈이 없으면 강제로 띄워주기
+                    formatted_answer = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', formatted_answer).strip()
+                    
+                    # 3. 파이썬의 줄바꿈(\n)을 HTML 줄바꿈(<br>)으로 변환
+                    formatted_answer = formatted_answer.replace('\n', '<br>')
+                    
+                    # 📺 가독성을 높인 동영상 스타일 UI (답변 좌측 정렬 + 단어 끊김 방지)
                     subtitle_area.markdown(
                         f"""
                         <div style="
-                            padding: 50px 30px; 
+                            padding: 50px 40px; 
                             border-radius: 15px; 
-                            text-align: center; 
                             background-color: #FFFFFF; 
                             border: 2px solid #E0E0E0;
                             min-height: 400px; 
@@ -855,10 +864,13 @@ elif menu == "📚 핵심 문제 DB":
                             justify-content: center;
                             box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
                         ">
-                            <h3 style="color: #005AAB; margin-bottom: 20px; font-size: 26px;">📝 문제 {q['id']}번</h3>
-                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #1A252F;">Q: {q['q']}</p>
-                            <hr style="border: 1px solid #E0E0E0; width: 80%; margin: 30px auto;">
-                            <p style="font-size: 26px; line-height: 1.6; color: #2C3E50;">A: {q['a']}</p>
+                            <h3 style="color: #005AAB; margin-bottom: 20px; font-size: 26px; text-align: center;">📝 문제 {q['id']}번</h3>
+                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #1A252F; text-align: center; word-break: keep-all;">Q: {q['q']}</p>
+                            <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 30px 0;">
+                            <div style="font-size: 26px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all;">
+                                <span style="color: #D32F2F; font-weight: bold;">A:</span><br><br>
+                                {formatted_answer}
+                            </div>
                         </div>
                         """, 
                         unsafe_allow_html=True
@@ -871,10 +883,8 @@ elif menu == "📚 핵심 문제 DB":
                     wait_time = len(text_to_read) * 0.16 
                     
                     if audio_bytes:
-                        # 정상적으로 음성이 생성된 경우 재생
                         audio_area.audio(audio_bytes, format="audio/mp3", autoplay=True)
                     else:
-                        # 만약의 경우를 대비한 에러 메시지
                         audio_area.error("음성 생성에 실패했습니다. 다음 문제로 넘어갑니다.")
                         
                     # 음성 길이나 자막 읽을 시간만큼 대기 후 다음 문제로 넘어감
