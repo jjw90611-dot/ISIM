@@ -16,6 +16,7 @@ st.set_page_config(page_title="산업안전지도사 면접 마스터", page_ico
 # ==========================================
 def apply_modern_ui():
     st.markdown("""
+    
     <style>
     @font-face {
         font-family: 'SeoulNamsanM';
@@ -566,7 +567,7 @@ elif menu == "📚 핵심 문제 DB":
 
     with tab_audio:
         st.subheader("📺 유튜브형 연속 재생 모드 (설거지/운전용)")
-        st.markdown("고음질 AI 아나운서 음성으로 **유튜브처럼 완벽한 진행바(Seek Bar)**를 제공합니다. 재생이 끝나면 자동으로 다음 파트로 넘어갑니다.")
+        st.markdown("고음질 AI 아나운서 음성으로 유튜브처럼 완벽한 진행바를 제공합니다. 재생이 끝나면 자동으로 다음 파트로 넘어갑니다.")
         
         if not QUESTIONS:
             st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
