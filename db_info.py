@@ -784,9 +784,41 @@ elif menu == "📚 핵심 문제 DB":
     # --- [탭 2] 음성 듣기 화면 (실시간 생성 방식) ---
     with tab_audio:
         st.subheader("🎧 핵심 문제 음성 플레이어 (실시간 생성)")
-        st.info("💡 파일 업로드 제한으로 인해, 텍스트를 즉석에서 음성으로 변환하여 들려줍니다. (구글 기본 목소리)")
+        st.info("💡 구글 기본 음성(여성)으로 재생됩니다. **재생 속도를 빠르게 하려면 오디오 플레이어 우측의 점 3개(⋮) 버튼을 눌러 '재생 속도'를 조절하세요.**")
         
         if QUESTIONS:
+            # ==========================================
+            # 1. 전체 연속 듣기 기능
+            # ==========================================
+            st.markdown("### 🎵 전체 연속 듣기")
+            st.warning("⚠️ 전체 문제를 한 번에 변환하므로 데이터 양에 따라 1~2분 정도 소요될 수 있습니다.")
+            
+            if st.button("▶️ 전체 문제 음성 생성 및 듣기", type="primary", use_container_width=True):
+                with st.spinner("전체 음성을 생성 중입니다... 잠시만 기다려주세요."):
+                    try:
+                        # 전체 텍스트 하나로 합치기
+                        all_text = ""
+                        for q in QUESTIONS:
+                            all_text += f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']} "
+                        
+                        # gTTS로 전체 음성 생성 (slow=False로 기본 속도 유지)
+                        tts_all = gTTS(text=all_text, lang='ko', slow=False)
+                        audio_fp_all = io.BytesIO()
+                        tts_all.write_to_fp(audio_fp_all)
+                        audio_fp_all.seek(0)
+                        
+                        # 생성된 전체 음성 재생
+                        st.audio(audio_fp_all, format="audio/mp3")
+                        st.success("전체 문제 음성 생성이 완료되었습니다! 플레이어의 재생 버튼을 눌러주세요.")
+                    except Exception as e:
+                        st.error(f"전체 음성 생성 중 오류가 발생했습니다: {e}")
+            
+            st.divider()
+            
+            # ==========================================
+            # 2. 개별 문제 듣기 기능
+            # ==========================================
+            st.markdown("### 🔢 번호별 선택 듣기")
             selected_id = st.selectbox(
                 "듣고 싶은 문제 번호를 선택하세요:", 
                 options=[item["id"] for item in QUESTIONS],
@@ -800,25 +832,25 @@ elif menu == "📚 핵심 문제 DB":
             st.markdown(f"> A. {selected_item['a']}")
             
             # 버튼을 누르면 실시간으로 음성을 생성하여 재생
-            if st.button("▶️ 이 문제 음성으로 듣기", type="primary"):
-                with st.spinner("음성을 생성 중입니다... 잠시만 기다려주세요."):
+            if st.button("▶️ 이 문제 음성으로 듣기"):
+                with st.spinner("음성을 생성 중입니다..."):
                     try:
                         # 읽어줄 텍스트 만들기
                         text_to_read = f"질문입니다. {selected_item['q']} 답변입니다. {selected_item['a']}"
                         
                         # gTTS를 이용해 실시간으로 음성 데이터 생성
-                        tts = gTTS(text=text_to_read, lang='ko')
+                        tts = gTTS(text=text_to_read, lang='ko', slow=False)
                         audio_fp = io.BytesIO()
                         tts.write_to_fp(audio_fp)
                         audio_fp.seek(0)
                         
                         # 생성된 음성 재생
                         st.audio(audio_fp, format="audio/mp3")
-                        st.success("음성 생성이 완료되었습니다. 재생 버튼을 눌러주세요!")
                     except Exception as e:
                         st.error(f"음성 생성 중 오류가 발생했습니다: {e}")
         else:
             st.warning("데이터가 없습니다. 코드 상단의 QUESTIONS 배열에 데이터를 넣어주세요.")
+
 
 # ==========================================
 # 6. AI 실전 모의면접
