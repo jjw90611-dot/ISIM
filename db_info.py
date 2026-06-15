@@ -47,9 +47,9 @@ def get_audio_bytes(text):
         return None
 
 # ==========================================
-# 🌙 완벽한 다크 모드 (까만 바탕 + 흰 글씨) CSS
+# 🎨 2026 모던 UI & 서울남산체 디자인 적용 (원본 밝은 테마)
 # ==========================================
-def apply_dark_mode_ui():
+def apply_modern_ui():
     st.markdown("""
     <style>
     /* 1. 서울남산체 웹 폰트 불러오기 */
@@ -60,83 +60,81 @@ def apply_dark_mode_ui():
         font-style: normal;
     }
 
-    /* 2. 전체 폰트 및 글자색 흰색 강제 적용 */
-    html, body, [class*="css"], [class*="st-"], p, div, span, button, input, h1, h2, h3, h4, h5, h6, label, li {
-        font-family: 'SeoulNamsanM', sans-serif !important;
-        color: #FFFFFF !important;
+    /* 2. 전체 폰트 적용 (아이콘 제외) */
+    html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
+        font-family: 'SeoulNamsanM', sans-serif;
+        font-size: 18px; 
+        line-height: 1.7; 
+        color: #2C3E50; 
     }
 
-    /* 3. 전체 배경색 (완전 검은색) */
-    .stApp, header, [data-testid="stHeader"] {
-        background-color: #000000 !important;
+    /* 🚨 핵심 해결책: Streamlit 기본 아이콘 폰트 보호 🚨 */
+    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
+        font-family: 'Material Symbols Rounded' !important;
     }
 
-    /* 4. 사이드바 배경색 (아주 어두운 회색) */
-    [data-testid="stSidebar"] {
-        background-color: #111111 !important;
-        border-right: 1px solid #333333 !important;
+    /* 3. 전체 배경색 (깔끔한 라이트 그레이) */
+    .stApp {
+        background-color: #F8F9FA;
     }
 
-    /* 5. 면접관/지원자 메시지 스타일 (다크모드용) */
+    /* 4. 면접관(Assistant) 메시지 스타일 - 포스코 블루 포인트 */
     [data-testid="stChatMessage"]:has([data-testid="stIconMaterial"]) {
-        background-color: #1A1A1A !important;
-        border-left: 6px solid #005AAB !important;
+        background-color: #FFFFFF;
+        border-left: 6px solid #005AAB;
         border-radius: 12px;
         padding: 20px;
-        margin-bottom: 20px;
-    }
-    [data-testid="stChatMessage"]:has(img) {
-        background-color: #112211 !important;
-        border-right: 6px solid #4CAF50 !important;
-        border-radius: 12px;
-        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
 
-    /* 6. 모던한 버튼 디자인 (다크모드) */
+    /* 5. 지원자(User) 메시지 스타일 - 부드러운 그린 포인트 */
+    [data-testid="stChatMessage"]:has(img) {
+        background-color: #F0F7FF;
+        border-right: 6px solid #4CAF50;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+    }
+
+    /* 6. 모던한 버튼 디자인 */
     .stButton > button {
-        background-color: #222222 !important;
+        background-color: #005AAB !important;
         color: #FFFFFF !important;
         border-radius: 8px !important;
-        border: 1px solid #444444 !important;
+        border: none !important;
         padding: 10px 24px !important;
         font-weight: bold !important;
         font-size: 18px !important;
         transition: all 0.3s ease !important;
+        box-shadow: 0 4px 6px rgba(0, 90, 171, 0.2) !important;
     }
     .stButton > button:hover {
-        background-color: #444444 !important;
-        border-color: #666666 !important;
-    }
-    div.stButton > button[kind="primary"] {
-        background-color: #005AAB !important;
-        border: none !important;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #007BFF !important;
+        background-color: #003F7A !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 90, 171, 0.4) !important;
     }
 
-    /* 7. 입력창, 셀렉트박스, Expander 다크모드 */
-    input, textarea, [data-baseweb="select"] > div, [data-testid="stExpander"] {
-        background-color: #1A1A1A !important;
-        border: 1px solid #333333 !important;
-        color: #FFFFFF !important;
+    /* 7. 제목 스타일링 */
+    h1, h2, h3 {
+        color: #1A252F !important;
+        font-weight: bold !important;
+        letter-spacing: -0.5px;
     }
     
-    /* 8. 구분선 */
+    /* 8. 구분선 모던화 */
     hr {
-        border-color: #333333 !important;
-    }
-
-    /* 아이콘 보호 */
-    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
-        font-family: 'Material Symbols Rounded' !important;
+        border: 0;
+        height: 1px;
+        background: #E0E0E0;
+        margin: 30px 0;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 앱 시작 시 다크모드 UI 적용
-apply_dark_mode_ui()
+# 앱 시작 시 UI 적용
+apply_modern_ui()
 
 # ==========================================
 # [데이터베이스] 기출/예상문제
@@ -568,19 +566,19 @@ QUESTIONS = [
 
     
 ]
-
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
 st.sidebar.markdown("""
     <div style="
+        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; 
         font-size: 20px; 
         font-weight: 900; 
         white-space: nowrap; 
-        color: #4CAF50 !important; 
+        color: #1E3A8A; 
         margin-bottom: 20px;
         padding-bottom: 10px;
-        border-bottom: 2px solid #333333;">
+        border-bottom: 2px solid #E5E7EB;">
         🏢 산업안전지도사 면접 마스터
     </div>
 """, unsafe_allow_html=True)
@@ -786,24 +784,28 @@ elif menu == "🗣️ 모범답변 예시":
 
 
 # ==========================================
-# 5. 핵심 문제 DB (동영상/노래방 모드 + 파트 분할)
+# 5. 핵심 문제 DB (전체 펼침 + 동영상 모드)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
     
-    tab_list, tab_audio = st.tabs(["📜 문제 리스트", "📺 동영상 재생 모드 (설거지용)"])
+    tab_list, tab_audio = st.tabs(["📜 문제 리스트 (전체 펼침)", "📺 동영상 재생 모드 (설거지용)"])
     
-    # --- 탭 1: 기존 문제 리스트 ---
+    # --- 탭 1: 문제 리스트 (클릭 없이 모두 펼쳐서 보여줌) ---
     with tab_list:
-        st.write("수록된 전체 문제 리스트입니다.")
+        st.write("수록된 전체 문제 리스트입니다. 스크롤을 내려 모든 문제를 바로 확인할 수 있습니다.")
         search_query = st.text_input("🔍 문제 검색 (키워드를 입력하세요)")
+        
+        st.markdown("---")
         
         for q in QUESTIONS:
             if search_query in q['q'] or search_query in q['a']:
-                with st.expander(f"Q{q['id']}. {q['q']}"):
-                    st.markdown(f"**[답변]**\n\n{q['a']}")
+                # expander 대신 markdown과 info 박스를 사용하여 항상 펼쳐진 상태로 렌더링
+                st.markdown(f"#### 📝 Q{q['id']}. {q['q']}")
+                st.info(f"**[답변]**\n\n{q['a']}")
+                st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- 탭 2: 동영상 재생 모드 (까만 바탕 + 흰 글씨 + 파트 분할) ---
+    # --- 탭 2: 동영상 재생 모드 (밝은 테마 + 파트 분할) ---
     with tab_audio:
         st.subheader("📺 핵심 문제 동영상 재생 모드")
         st.markdown("설거지나 이동 중에 편하게 듣고 볼 수 있는 모드입니다. **구글 API 차단을 막기 위해 10문제씩 나누어 재생**합니다.")
@@ -838,25 +840,25 @@ elif menu == "📚 핵심 문제 DB":
                 for q in current_questions:
                     text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
                     
-                    # 📺 까만 바탕에 흰색 글씨 (동영상 스타일 UI)
+                    # 📺 밝고 깔끔한 동영상 스타일 UI
                     subtitle_area.markdown(
                         f"""
                         <div style="
                             padding: 50px 30px; 
                             border-radius: 15px; 
                             text-align: center; 
-                            background-color: #000000; 
-                            border: 2px solid #333333;
+                            background-color: #FFFFFF; 
+                            border: 2px solid #E0E0E0;
                             min-height: 400px; 
                             display: flex; 
                             flex-direction: column; 
                             justify-content: center;
-                            box-shadow: 0px 10px 20px rgba(0,0,0,0.8);
+                            box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
                         ">
-                            <h3 style="color: #4CAF50 !important; margin-bottom: 20px; font-size: 26px;">📝 문제 {q['id']}번</h3>
-                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #FFFFFF !important;">Q: {q['q']}</p>
-                            <hr style="border: 1px solid #444444; width: 80%; margin: 30px auto;">
-                            <p style="font-size: 26px; line-height: 1.6; color: #DDDDDD !important;">A: {q['a']}</p>
+                            <h3 style="color: #005AAB; margin-bottom: 20px; font-size: 26px;">📝 문제 {q['id']}번</h3>
+                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #1A252F;">Q: {q['q']}</p>
+                            <hr style="border: 1px solid #E0E0E0; width: 80%; margin: 30px auto;">
+                            <p style="font-size: 26px; line-height: 1.6; color: #2C3E50;">A: {q['a']}</p>
                         </div>
                         """, 
                         unsafe_allow_html=True
@@ -872,7 +874,7 @@ elif menu == "📚 핵심 문제 DB":
                         # 정상적으로 음성이 생성된 경우 재생
                         audio_area.audio(audio_bytes, format="audio/mp3", autoplay=True)
                     else:
-                        # 만약의 경우를 대비한 에러 메시지 (이제 거의 뜰 일 없습니다)
+                        # 만약의 경우를 대비한 에러 메시지
                         audio_area.error("음성 생성에 실패했습니다. 다음 문제로 넘어갑니다.")
                         
                     # 음성 길이나 자막 읽을 시간만큼 대기 후 다음 문제로 넘어감
