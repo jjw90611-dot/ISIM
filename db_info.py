@@ -787,9 +787,9 @@ from gtts import gTTS
 import io
 
     # --- [탭 2] 음성 듣기 화면 (노래방 자막 + 429 오류 방지 버전) ---
-    with tab_audio:
-        st.subheader("🎧 핵심 문제 음성 플레이어 (노래방 모드 🎤)")
-        st.info("💡 재생 속도는 플레이어 우측 점 3개(⋮) 버튼에서 조절하세요.")
+with tab_audio:
+    st.subheader("🎧 핵심 문제 음성 플레이어 (노래방 모드 🎤)")
+    st.info("💡 재생 속도는 플레이어 우측 점 3개(⋮) 버튼에서 조절하세요.")
         
         if QUESTIONS:
             # 1. 전체 연속 듣기 기능 (노래방 스타일 자막 지원)
