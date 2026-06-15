@@ -655,6 +655,10 @@ elif menu == "📚 핵심 문제 DB":
                 else:
                     st.success("🎉 모든 파트의 재생이 완료되었습니다!")
 
+            # (추가) 강제로 여백을 주어 위쪽 요소와 겹치는 현상 방지
+            st.write("")
+            st.write("")
+            
             # 현재 파트 문제 텍스트 보여주기
             with st.expander("📖 현재 파트 문제 대본 보기 (클릭하여 펼치기)", expanded=True):
                 for q in current_questions:
