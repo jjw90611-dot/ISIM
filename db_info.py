@@ -781,39 +781,54 @@ elif menu == "📚 핵심 문제 DB":
         else:
             st.warning("데이터가 없습니다. 코드 상단의 QUESTIONS 배열에 데이터를 넣어주세요.")
 
-    # --- [탭 2] 음성 듣기 화면 (실시간 생성 방식) ---
-    with tab_audio:
-        st.subheader("🎧 핵심 문제 음성 플레이어 (실시간 생성)")
-        st.info("💡 구글 기본 음성(여성)으로 재생됩니다. **재생 속도를 빠르게 하려면 오디오 플레이어 우측의 점 3개(⋮) 버튼을 눌러 '재생 속도'를 조절하세요.**")
-        
-        if QUESTIONS:
-            # ==========================================
-            # 1. 전체 연속 듣기 기능
-            # ==========================================
-            st.markdown("### 🎵 전체 연속 듣기")
-            st.warning("⚠️ 전체 문제를 한 번에 변환하므로 데이터 양에 따라 1~2분 정도 소요될 수 있습니다.")
+import time
+import streamlit as st
+from gtts import gTTS
+import io
+
+# --- [탭 2] 음성 듣기 화면 (노래방 자막 버전) ---
+with tab_audio:
+    st.subheader("🎤 노래방 스타일 자막 재생")
+    
+    if QUESTIONS:
+        if st.button("▶️ 전체 문제 자막과 함께 듣기"):
+            # 자막을 표시할 공간 생성
+            subtitle_placeholder = st.empty()
             
-            if st.button("▶️ 전체 문제 음성 생성 및 듣기", type="primary", use_container_width=True):
-                with st.spinner("전체 음성을 생성 중입니다... 잠시만 기다려주세요."):
-                    try:
-                        # 전체 텍스트 하나로 합치기
-                        all_text = ""
-                        for q in QUESTIONS:
-                            all_text += f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']} "
-                        
-                        # gTTS로 전체 음성 생성 (slow=False로 기본 속도 유지)
-                        tts_all = gTTS(text=all_text, lang='ko', slow=False)
-                        audio_fp_all = io.BytesIO()
-                        tts_all.write_to_fp(audio_fp_all)
-                        audio_fp_all.seek(0)
-                        
-                        # 생성된 전체 음성 재생
-                        st.audio(audio_fp_all, format="audio/mp3")
-                        st.success("전체 문제 음성 생성이 완료되었습니다! 플레이어의 재생 버튼을 눌러주세요.")
-                    except Exception as e:
-                        st.error(f"전체 음성 생성 중 오류가 발생했습니다: {e}")
+            for q in QUESTIONS:
+                # 1. 현재 문제 자막 표시
+                subtitle_placeholder.markdown(
+                    f"""
+                    <div style="padding: 20px; border: 2px solid #4CAF50; border-radius: 10px; text-align: center;">
+                        <h3 style="color: #4CAF50;">문제 {q['id']}번</h3>
+                        <p style="font-size: 20px;"><b>Q: {q['q']}</b></p>
+                        <p style="font-size: 18px;">A: {q['a']}</p>
+                    </div>
+                    """, unsafe_allow_html=True
+                )
+                
+                # 2. 음성 생성 및 재생
+                text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
+                try:
+                    tts = gTTS(text=text_to_read, lang='ko', slow=False)
+                    audio_fp = io.BytesIO()
+                    tts.write_to_fp(audio_fp)
+                    audio_fp.seek(0)
+                    
+                    # 오디오 재생 (autoplay=True는 브라우저 정책상 제한될 수 있음)
+                    st.audio(audio_fp, format="audio/mp3", autoplay=True)
+                    
+                    # 3. 음성 길이를 대략적으로 계산하여 대기 (글자수 * 0.2초 정도)
+                    # 실제 음성 길이를 정확히 알 수 없으므로, 텍스트 길이에 비례해 대기합니다.
+                    wait_time = len(text_to_read) * 0.15 
+                    time.sleep(wait_time)
+                    
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+                    break
             
-            st.divider()
+            st.success("모든 문제 재생이 완료되었습니다!")
+
             
             # ==========================================
             # 2. 개별 문제 듣기 기능
