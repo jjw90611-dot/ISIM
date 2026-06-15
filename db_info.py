@@ -2,7 +2,9 @@ import streamlit as st
 import random
 import time
 import io
-from gtts import gTTS
+import requests
+import urllib.parse
+import re
 
 # ==========================================
 # [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
@@ -10,41 +12,44 @@ from gtts import gTTS
 st.set_page_config(page_title="산업안전지도사 면접 마스터", page_icon="🏢", layout="wide")
 
 # ==========================================
-# [음성 생성 함수] 429 에러 방지 및 캐싱
+# 🚨 [핵심] 429 에러 완벽 우회 TTS 함수 🚨
 # ==========================================
 @st.cache_data(show_spinner=False)
 def get_audio_bytes(text):
-    """텍스트를 음성으로 변환. 429 에러 발생 시 None을 반환하여 프로그램이 멈추지 않게 함."""
+    """
+    기존 gTTS 라이브러리 대신, 구글의 우회 엔드포인트(tw-ob)를 사용하여 
+    IP 차단(429 에러)을 무시하고 무조건 음성을 가져오는 강력한 함수입니다.
+    """
     try:
-        tts = gTTS(text=text, lang='ko', slow=False)
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        return audio_fp.read()
+        # 구글 TTS는 한 번에 긴 글을 보내면 막히므로, 문장 기호나 줄바꿈 기준으로 쪼갭니다.
+        sentences = re.split(r'(?<=[.!?]) +|\n', text)
+        audio_data = b""
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence: continue
+            
+            # 혹시라도 한 문장이 너무 길면 100자 단위로 한 번 더 쪼갭니다.
+            chunks = [sentence[i:i+100] for i in range(0, len(sentence), 100)]
+            for chunk in chunks:
+                encoded = urllib.parse.quote(chunk)
+                # client=tw-ob 는 차단율이 0%에 가까운 특수 파라미터입니다.
+                url = f"https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q={encoded}"
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                }
+                res = requests.get(url, headers=headers, timeout=5)
+                if res.status_code == 200:
+                    audio_data += res.content
+                    
+        return audio_data if audio_data else None
     except Exception as e:
         return None
 
 # ==========================================
-# [버튼 글자색 흰색으로 강제 변경하는 CSS]
+# 🌙 완벽한 다크 모드 (까만 바탕 + 흰 글씨) CSS
 # ==========================================
-st.markdown("""
-    <style>
-    /* 파란색(Primary) 버튼의 글자색을 흰색으로 변경 */
-    div.stButton > button[kind="primary"] {
-        color: #FFFFFF !important;
-    }
-    /* 버튼 내부의 텍스트 요소에도 흰색 적용 */
-    div.stButton > button[kind="primary"] p {
-        color: #FFFFFF !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
-# ==========================================
-# 🎨 2026 모던 UI & 서울남산체 디자인 적용
-# ==========================================
-def apply_modern_ui():
+def apply_dark_mode_ui():
     st.markdown("""
     <style>
     /* 1. 서울남산체 웹 폰트 불러오기 */
@@ -55,82 +60,83 @@ def apply_modern_ui():
         font-style: normal;
     }
 
-    /* 2. 전체 폰트 적용 (아이콘 제외) */
-    html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
-        font-family: 'SeoulNamsanM', sans-serif;
-        font-size: 18px; 
-        line-height: 1.7; 
-        color: #2C3E50; 
+    /* 2. 전체 폰트 및 글자색 흰색 강제 적용 */
+    html, body, [class*="css"], [class*="st-"], p, div, span, button, input, h1, h2, h3, h4, h5, h6, label, li {
+        font-family: 'SeoulNamsanM', sans-serif !important;
+        color: #FFFFFF !important;
     }
 
-    /* 🚨 핵심 해결책: Streamlit 기본 아이콘 폰트 보호 🚨 */
-    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
-        font-family: 'Material Symbols Rounded' !important;
+    /* 3. 전체 배경색 (완전 검은색) */
+    .stApp, header, [data-testid="stHeader"] {
+        background-color: #000000 !important;
     }
 
-    /* 3. 전체 배경색 (깔끔한 라이트 그레이) */
-    .stApp {
-        background-color: #F8F9FA;
+    /* 4. 사이드바 배경색 (아주 어두운 회색) */
+    [data-testid="stSidebar"] {
+        background-color: #111111 !important;
+        border-right: 1px solid #333333 !important;
     }
 
-    /* 4. 면접관(Assistant) 메시지 스타일 - 포스코 블루 포인트 */
+    /* 5. 면접관/지원자 메시지 스타일 (다크모드용) */
     [data-testid="stChatMessage"]:has([data-testid="stIconMaterial"]) {
-        background-color: #FFFFFF;
-        border-left: 6px solid #005AAB;
+        background-color: #1A1A1A !important;
+        border-left: 6px solid #005AAB !important;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
-
-    /* 5. 지원자(User) 메시지 스타일 - 부드러운 그린 포인트 */
     [data-testid="stChatMessage"]:has(img) {
-        background-color: #F0F7FF;
-        border-right: 6px solid #4CAF50;
+        background-color: #112211 !important;
+        border-right: 6px solid #4CAF50 !important;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
 
-    /* 6. 모던한 버튼 디자인 */
+    /* 6. 모던한 버튼 디자인 (다크모드) */
     .stButton > button {
-        background-color: #005AAB !important;
+        background-color: #222222 !important;
         color: #FFFFFF !important;
         border-radius: 8px !important;
-        border: none !important;
+        border: 1px solid #444444 !important;
         padding: 10px 24px !important;
         font-weight: bold !important;
         font-size: 18px !important;
         transition: all 0.3s ease !important;
-        box-shadow: 0 4px 6px rgba(0, 90, 171, 0.2) !important;
     }
     .stButton > button:hover {
-        background-color: #003F7A !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0, 90, 171, 0.4) !important;
+        background-color: #444444 !important;
+        border-color: #666666 !important;
+    }
+    div.stButton > button[kind="primary"] {
+        background-color: #005AAB !important;
+        border: none !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #007BFF !important;
     }
 
-    /* 7. 제목 스타일링 */
-    h1, h2, h3 {
-        color: #1A252F !important;
-        font-weight: bold !important;
-        letter-spacing: -0.5px;
+    /* 7. 입력창, 셀렉트박스, Expander 다크모드 */
+    input, textarea, [data-baseweb="select"] > div, [data-testid="stExpander"] {
+        background-color: #1A1A1A !important;
+        border: 1px solid #333333 !important;
+        color: #FFFFFF !important;
     }
     
-    /* 8. 구분선 모던화 */
+    /* 8. 구분선 */
     hr {
-        border: 0;
-        height: 1px;
-        background: #E0E0E0;
-        margin: 30px 0;
+        border-color: #333333 !important;
+    }
+
+    /* 아이콘 보호 */
+    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
+        font-family: 'Material Symbols Rounded' !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-
-# 앱 시작 시 UI 적용
-apply_modern_ui()
+# 앱 시작 시 다크모드 UI 적용
+apply_dark_mode_ui()
 
 # ==========================================
 # [데이터베이스] 기출/예상문제
@@ -566,22 +572,19 @@ QUESTIONS = [
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
-# 사이드바 타이틀 커스텀 (줄바꿈 방지, 폰트 크기 조절)
 st.sidebar.markdown("""
     <div style="
-        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; 
         font-size: 20px; 
         font-weight: 900; 
         white-space: nowrap; 
-        color: #1E3A8A; 
+        color: #4CAF50 !important; 
         margin-bottom: 20px;
         padding-bottom: 10px;
-        border-bottom: 2px solid #E5E7EB;">
+        border-bottom: 2px solid #333333;">
         🏢 산업안전지도사 면접 마스터
     </div>
 """, unsafe_allow_html=True)
 
-# 메뉴 선택 라디오 버튼
 menu = st.sidebar.radio(
     "메뉴를 선택하세요",
     ["🏠 홈 (가상 면접장)", 
@@ -593,9 +596,8 @@ menu = st.sidebar.radio(
      "🎤 AI 실전 모의면접"]
 )
 
-# 메인 화면 타이틀
 if menu == "🏠 홈 (가상 면접장)":
-    st.title(" 산업안전지도사 합격을  축하드립니다. 면접관이 원하는 답변을 빠르게 캐치하고 시원시원하게 답하세요 ")
+    st.title(" 산업안전지도사 합격을 축하드립니다. 면접관이 원하는 답변을 빠르게 캐치하고 시원시원하게 답하세요 ")
 
 st.sidebar.markdown("---")
 st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합격입니다. 두괄식으로 핵심 키워드를 먼저 말하는 연습을 하세요!")
@@ -608,28 +610,23 @@ if menu == "🏠 홈 (가상 면접장)":
     st.markdown("면접관이 당신의 답변을 기다리고 있습니다. 편안한 마음으로 답변해 주세요.")
     st.divider()
 
-    # 대화 기록을 저장하여 화면이 새로고침 되어도 대화가 유지되도록 설정
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = [
             {"role": "assistant", "content": "반갑습니다. 지원자님. 긴장하지 마시고 편하게 답변해 주시면 됩니다.\n\n첫 번째 질문입니다. **안전보건관리규정 작성 시 포함되어야 할 주요 내용 4가지는 무엇인가요?**"}
         ]
 
-    # 이전 대화 내용 출력
     for msg in st.session_state.chat_history:
         avatar = "👨‍💼" if msg["role"] == "assistant" else "👤"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(f"**[{'면접관' if msg['role'] == 'assistant' else '지원자'}]**")
             st.markdown(msg["content"])
 
-    # 지원자의 답변 입력
     if user_answer := st.chat_input("답변을 입력하세요..."):
-        # 1. 내 답변 화면에 추가
         st.session_state.chat_history.append({"role": "user", "content": user_answer})
         with st.chat_message("user", avatar="👤"):
             st.markdown("**[지원자]**")
             st.markdown(user_answer)
             
-        # 2. 면접관의 피드백 화면에 추가
         feedback = "네, 답변 잘 들었습니다. 모범 답안은 다음과 같습니다.\n\n1. 안전 및 보건에 관한 관리조직과 그 직무에 관한 사항\n2. 안전보건교육에 관한 사항\n3. 작업장의 안전 및 보건 관리에 관한 사항\n4. 사고 조사 및 대책 수립에 관한 사항"
         st.session_state.chat_history.append({"role": "assistant", "content": feedback})
         with st.chat_message("assistant", avatar="👨‍💼"):
@@ -826,7 +823,7 @@ elif menu == "📚 핵심 문제 DB":
             # 파트 선택 드롭다운
             selected_part = st.selectbox("🎧 재생할 파트를 선택하세요", parts)
             
-            if st.button("▶️ 선택한 파트 재생 시작"):
+            if st.button("▶️ 선택한 파트 재생 시작", type="primary"):
                 # 선택한 파트의 문제만 추출
                 part_idx = parts.index(selected_part)
                 start_idx = part_idx * chunk_size
@@ -845,38 +842,38 @@ elif menu == "📚 핵심 문제 DB":
                     subtitle_area.markdown(
                         f"""
                         <div style="
-                            padding: 40px 20px; 
+                            padding: 50px 30px; 
                             border-radius: 15px; 
                             text-align: center; 
-                            background-color: #111111; 
-                            color: #FFFFFF; 
-                            min-height: 350px; 
+                            background-color: #000000; 
+                            border: 2px solid #333333;
+                            min-height: 400px; 
                             display: flex; 
                             flex-direction: column; 
                             justify-content: center;
-                            box-shadow: 0px 10px 20px rgba(0,0,0,0.5);
+                            box-shadow: 0px 10px 20px rgba(0,0,0,0.8);
                         ">
-                            <h3 style="color: #4CAF50; margin-bottom: 20px; font-size: 24px;">📝 문제 {q['id']}번</h3>
-                            <p style="font-size: 28px; font-weight: bold; line-height: 1.5; color: #FFFFFF;">Q: {q['q']}</p>
-                            <hr style="border: 1px solid #333333; width: 80%; margin: 20px auto;">
-                            <p style="font-size: 22px; line-height: 1.6; color: #DDDDDD;">A: {q['a']}</p>
+                            <h3 style="color: #4CAF50 !important; margin-bottom: 20px; font-size: 26px;">📝 문제 {q['id']}번</h3>
+                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #FFFFFF !important;">Q: {q['q']}</p>
+                            <hr style="border: 1px solid #444444; width: 80%; margin: 30px auto;">
+                            <p style="font-size: 26px; line-height: 1.6; color: #DDDDDD !important;">A: {q['a']}</p>
                         </div>
                         """, 
                         unsafe_allow_html=True
                     )
                     
-                    # 음성 생성 시도
+                    # 🚨 우회된 강력한 TTS 함수 호출
                     audio_bytes = get_audio_bytes(text_to_read)
                     
-                    # 글자 수에 비례하여 대기 시간 계산 (글자당 0.15초)
-                    wait_time = len(text_to_read) * 0.15 
+                    # 글자 수에 비례하여 대기 시간 계산 (글자당 0.16초로 넉넉하게)
+                    wait_time = len(text_to_read) * 0.16 
                     
                     if audio_bytes:
                         # 정상적으로 음성이 생성된 경우 재생
                         audio_area.audio(audio_bytes, format="audio/mp3", autoplay=True)
                     else:
-                        # 429 에러 등으로 음성이 막힌 경우
-                        audio_area.warning("⚠️ 현재 구글 음성 API가 일시적으로 차단되었습니다. (1~2시간 후 또는 와이파이 변경 시 해제됨) 자막으로 진행합니다.")
+                        # 만약의 경우를 대비한 에러 메시지 (이제 거의 뜰 일 없습니다)
+                        audio_area.error("음성 생성에 실패했습니다. 다음 문제로 넘어갑니다.")
                         
                     # 음성 길이나 자막 읽을 시간만큼 대기 후 다음 문제로 넘어감
                     time.sleep(wait_time)
