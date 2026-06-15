@@ -786,48 +786,76 @@ import streamlit as st
 from gtts import gTTS
 import io
 
-# --- [탭 2] 음성 듣기 화면 (노래방 자막 버전) ---
-with tab_audio:
-    st.subheader("🎤 노래방 스타일 자막 재생")
-    
-    if QUESTIONS:
-        if st.button("▶️ 전체 문제 자막과 함께 듣기"):
-            # 자막을 표시할 공간 생성
-            subtitle_placeholder = st.empty()
-            
-            for q in QUESTIONS:
-                # 1. 현재 문제 자막 표시
-                subtitle_placeholder.markdown(
-                    f"""
-                    <div style="padding: 20px; border: 2px solid #4CAF50; border-radius: 10px; text-align: center;">
-                        <h3 style="color: #4CAF50;">문제 {q['id']}번</h3>
-                        <p style="font-size: 20px;"><b>Q: {q['q']}</b></p>
-                        <p style="font-size: 18px;">A: {q['a']}</p>
-                    </div>
-                    """, unsafe_allow_html=True
-                )
+    # --- [탭 2] 음성 듣기 화면 (노래방 자막 + 429 오류 방지 버전) ---
+    with tab_audio:
+        st.subheader("🎧 핵심 문제 음성 플레이어 (노래방 모드 🎤)")
+        st.info("💡 재생 속도는 플레이어 우측 점 3개(⋮) 버튼에서 조절하세요.")
+        
+        if QUESTIONS:
+            # 1. 전체 연속 듣기 기능 (노래방 스타일 자막 지원)
+            st.markdown("### 🎵 전체 연속 듣기 (자막 지원)")
+            if st.button("▶️ 전체 문제 자막과 함께 듣기", type="primary", use_container_width=True):
+                import time # 시간 지연을 위해 필요합니다.
                 
-                # 2. 음성 생성 및 재생
-                text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
-                try:
-                    tts = gTTS(text=text_to_read, lang='ko', slow=False)
+                # 자막과 오디오 플레이어를 실시간으로 바꿔치기할 빈 공간(placeholder) 생성
+                subtitle_area = st.empty()
+                audio_area = st.empty()
+                
+                st.toast("노래방 모드를 시작합니다!", icon="🎤")
+                
+                for q in QUESTIONS:
+                    text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
+                    
+                    # 1) 현재 읽어줄 문제의 자막을 화면에 표시
+                    subtitle_area.markdown(
+                        f"""
+                        <div style="padding: 20px; border: 2px solid #4CAF50; border-radius: 10px; text-align: center; background-color: #f9f9f9;">
+                            <h3 style="color: #4CAF50; margin-bottom: 10px;">문제 {q['id']}번</h3>
+                            <p style="font-size: 22px; color: #333;"><b>Q: {q['q']}</b></p>
+                            <p style="font-size: 18px; color: #555;">A: {q['a']}</p>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                    
+                    # 2) 음성 생성 (429 방지를 위해 한 문제씩 개별 생성)
+                    try:
+                        tts = gTTS(text=text_to_read, lang='ko', slow=False)
+                        audio_fp = io.BytesIO()
+                        tts.write_to_fp(audio_fp)
+                        audio_fp.seek(0)
+                        
+                        # 3) 오디오 재생 (autoplay=True로 자동 재생 시도)
+                        audio_area.audio(audio_fp, format="audio/mp3", autoplay=True)
+                        
+                        # 4) 음성 길이에 맞춰 대기 (글자 수 기반 어림짐작)
+                        # 한국어 gTTS는 보통 1글자당 0.13 ~ 0.15초 정도 소요됩니다.
+                        wait_time = len(text_to_read) * 0.14 
+                        time.sleep(wait_time)
+                        
+                    except Exception as e:
+                        st.error(f"음성 생성 중 오류가 발생했습니다: {e}")
+                        break
+                
+                # 모든 반복이 끝나면 완료 메시지 표시
+                subtitle_area.success("🎉 모든 문제 재생이 완료되었습니다!")
+                audio_area.empty() # 마지막 오디오 플레이어 숨기기
+            
+            st.divider()
+            
+            # 2. 개별 문제 듣기 기능 (기존 코드 유지)
+            st.markdown("### 🔢 번호별 선택 듣기")
+            selected_id = st.selectbox("듣고 싶은 문제 번호:", options=[item["id"] for item in QUESTIONS])
+            selected_item = next(item for item in QUESTIONS if item["id"] == selected_id)
+            
+            st.markdown(f"**Q. {selected_item['q']}**")
+            if st.button("▶️ 이 문제 듣기"):
+                with st.spinner("생성 중..."):
+                    tts = gTTS(text=f"{selected_item['q']} {selected_item['a']}", lang='ko', slow=False)
                     audio_fp = io.BytesIO()
                     tts.write_to_fp(audio_fp)
                     audio_fp.seek(0)
-                    
-                    # 오디오 재생 (autoplay=True는 브라우저 정책상 제한될 수 있음)
-                    st.audio(audio_fp, format="audio/mp3", autoplay=True)
-                    
-                    # 3. 음성 길이를 대략적으로 계산하여 대기 (글자수 * 0.2초 정도)
-                    # 실제 음성 길이를 정확히 알 수 없으므로, 텍스트 길이에 비례해 대기합니다.
-                    wait_time = len(text_to_read) * 0.15 
-                    time.sleep(wait_time)
-                    
-                except Exception as e:
-                    st.error(f"오류 발생: {e}")
-                    break
-            
-            st.success("모든 문제 재생이 완료되었습니다!")
+                    st.audio(audio_fp, format="audio/mp3")
 
 # ==========================================
 # 6. AI 실전 모의면접
