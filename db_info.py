@@ -1,16 +1,18 @@
 import streamlit as st
 import random
 import re
-import json
+import base64
+import io
 import streamlit.components.v1 as components
+from gtts import gTTS  # 깃허브 requirements.txt를 통해 자동 설치됨
 
 # ==========================================
-# [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
+# [초기 설정] 페이지 세팅
 # ==========================================
 st.set_page_config(page_title="산업안전지도사 면접 마스터", page_icon="🏢", layout="wide")
 
 # ==========================================
-# 🎨 2026 모던 UI & 서울남산체 디자인 적용
+# 🎨 2026 모던 UI 디자인 적용
 # ==========================================
 def apply_modern_ui():
     st.markdown("""
@@ -23,23 +25,13 @@ def apply_modern_ui():
     html, body, [class*="css"], [class*="st-"], p, div, span, button, input, select {
         font-family: 'SeoulNamsanM', sans-serif; font-size: 18px; line-height: 1.7; color: #2C3E50; 
     }
-    .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
-        font-family: 'Material Symbols Rounded' !important;
-    }
     .stApp { background-color: #F8F9FA; }
-    [data-testid="stChatMessage"]:has([data-testid="stIconMaterial"]) {
-        background-color: #FFFFFF; border-left: 6px solid #005AAB; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); margin-bottom: 20px;
-    }
-    [data-testid="stChatMessage"]:has(img) {
-        background-color: #F0F7FF; border-right: 6px solid #4CAF50; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); margin-bottom: 20px;
-    }
     .stButton > button {
         background-color: #005AAB !important; color: #FFFFFF !important; border-radius: 8px !important; border: none !important; padding: 10px 24px !important; font-weight: bold !important; font-size: 18px !important; transition: all 0.3s ease !important; box-shadow: 0 4px 6px rgba(0, 90, 171, 0.2) !important;
     }
     .stButton > button:hover {
         background-color: #003F7A !important; transform: translateY(-2px) !important; box-shadow: 0 6px 12px rgba(0, 90, 171, 0.4) !important;
     }
-    h1, h2, h3 { color: #1A252F !important; font-weight: bold !important; letter-spacing: -0.5px; }
     hr { border: 0; height: 1px; background: #E0E0E0; margin: 30px 0; }
     </style>
     """, unsafe_allow_html=True)
@@ -49,7 +41,7 @@ apply_modern_ui()
 # ==========================================
 # [데이터베이스] 기출/예상문제
 # ==========================================
-# 선생님, 아래 대괄호 [ ] 안에 417개의 문제 데이터를 붙여넣어 주세요!
+# 선생님, 아래 대괄호 [ ] 안에 문제 데이터를 붙여넣어 주세요!
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
     {"id": 2, "q": "산업안전지도사 기계분야의 직무에 대해 말해보세요?", "a": "산안법 제145조 제1항에 따라 등록한 기계안전지도사의 업무범위는\n1. 유해위험방지계획서, 안전보건개선계획서, 공정안전보고서, 기계기구설비의 작업계획서 및 MSDS 작성 지도\n2. 정전기·전자파로 인한 재해예방, 자동화 및 자동제어설비, 방폭전기설비 및 전력시스템 등 기술지도\n3. 전기, 기계기구설비, 화학설비 및 공정에 대한 설계·시공·배치·유지보수에 관한 안전성평가 및 기술지도\n4. 인화성가스, 액체, 폭발성물질, 급성독성 물질 및 방폭설비 등에 관한 안전성평가 및 기술지도\n5. 크레인 등 기계·기구, 전기작업의 안전성평가\n6. 그 밖의 교육 또는 기술지도 업무\n\n*Tip : 유.정.전.인.크"},
@@ -492,14 +484,8 @@ menu = st.sidebar.radio(
     ["🏠 홈 (가상 면접장)", "📝 들어가며 (인사말)", "📋 면접시험 상세정보", "💡 실전면접 요령", "🗣️ 모범답변 예시", "📚 핵심 문제 DB", "🎤 AI 실전 모의면접"]
 )
 
-if menu == "🏠 홈 (가상 면접장)":
-    st.title(" 산업안전지도사 합격을 축하드립니다. 면접관이 원하는 답변을 빠르게 캐치하고 시원시원하게 답하세요 ")
-
-st.sidebar.markdown("---")
-st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합격입니다. 두괄식으로 핵심 키워드를 먼저 말하는 연습을 하세요!")
-
 # ==========================================
-# 0~4. 텍스트 메뉴들 (생략 없이 원본 유지)
+# 0~4. 텍스트 메뉴들
 # ==========================================
 if menu == "🏠 홈 (가상 면접장)":
     st.title("🏢 산업안전지도사 가상 면접장")
@@ -547,7 +533,7 @@ elif menu == "🗣️ 모범답변 예시":
     st.markdown("### 🗣️ 상황별 모범 답변 대본...")
 
 # ==========================================
-# 5. 핵심 문제 DB (무한 자동재생 + 드래그 진행바 완벽 지원)
+# 5. 핵심 문제 DB (유튜브형 완벽 플레이어)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
@@ -565,270 +551,104 @@ elif menu == "📚 핵심 문제 DB":
                 st.markdown("<br>", unsafe_allow_html=True)
 
     with tab_audio:
-        st.subheader("📺 무한 연속 재생 모드 (설거지/운전용)")
-        st.markdown("재생을 누르면 **파트 1부터 마지막 문제까지 멈추지 않고 자동으로 넘어갑니다.** (문제 간격 0.5초)")
+        st.subheader("📺 유튜브형 연속 재생 모드 (설거지/운전용)")
+        st.markdown("실제 오디오 파일(MP3)을 생성하여 **유튜브처럼 완벽한 진행바(Seek Bar)**를 제공합니다. 재생이 끝나면 자동으로 다음 파트로 넘어갑니다.")
         
         if not QUESTIONS:
             st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
         else:
-            # 전체 데이터를 JS로 넘기기 위해 JSON으로 변환
-            js_questions = []
-            for q in QUESTIONS:
-                ans = q['a']
-                formatted_a = re.sub(r'[ \t]+', ' ', ans)
-                formatted_a = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', formatted_a).strip()
-                formatted_a = formatted_a.replace('\n', '<br>')
-                plain_a = re.sub(r'[*_~]', '', ans)
-                
-                js_questions.append({
-                    "id": q['id'],
-                    "q": q['q'],
-                    "formatted_a": formatted_a,
-                    "plain_a": plain_a
-                })
+            # 파트 계산 (10문제씩 묶음)
+            chunk_size = 10
+            total_parts = (len(QUESTIONS) - 1) // chunk_size + 1
+
+            if 'current_part' not in st.session_state:
+                st.session_state.current_part = 1
+
+            # 파트 선택 UI
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                selected_part = st.selectbox(
+                    "현재 재생 파트 선택",
+                    range(1, total_parts + 1),
+                    index=st.session_state.current_part - 1,
+                    format_func=lambda x: f"파트 {x} ({(x-1)*chunk_size + 1}번 ~ {min(x*chunk_size, len(QUESTIONS))}번)"
+                )
+                if selected_part != st.session_state.current_part:
+                    st.session_state.current_part = selected_part
+                    st.rerun()
+
+            # 현재 파트의 문제들 추출
+            start_idx = (st.session_state.current_part - 1) * chunk_size
+            end_idx = min(start_idx + chunk_size, len(QUESTIONS))
+            current_questions = QUESTIONS[start_idx:end_idx]
+
+            # 읽어줄 텍스트 생성
+            text_to_read = f"파트 {st.session_state.current_part} 시작합니다. "
+            for q in current_questions:
+                plain_a = re.sub(r'[*_~]', '', q['a']) # 특수문자 제거
+                text_to_read += f"문제 {q['id']}번. {q['q']}. 답변입니다. {plain_a} "
+            text_to_read += "이번 파트가 끝났습니다. 잠시 후 다음 파트로 넘어갑니다."
+
+            # 🚨 오디오 생성 함수 (캐싱하여 한 번 만든 파트는 0.1초만에 로딩됨)
+            @st.cache_data(show_spinner=False)
+            def generate_audio_file(text):
+                tts = gTTS(text=text, lang='ko', slow=False)
+                fp = io.BytesIO()
+                tts.write_to_fp(fp)
+                fp.seek(0)
+                return fp.read()
+
+            # 오디오 생성 및 인코딩
+            with st.spinner(f"파트 {st.session_state.current_part} 오디오를 생성 중입니다... (최초 1회만 약 5~10초 소요)"):
+                audio_bytes = generate_audio_file(text_to_read)
+                b64_audio = base64.b64encode(audio_bytes).decode()
+
+            st.markdown("---")
             
-            questions_json = json.dumps(js_questions, ensure_ascii=False)
-            
-            # 🚨 [혁신] 드래그 가능한 진행바(Seek Bar)와 즉시 렌더링이 포함된 완벽한 플레이어
+            # 🚨 핵심: 완벽한 진행바를 가진 HTML5 Audio 태그와 자동 넘김 JS
             html_player = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <style>
-                body {{ font-family: 'Malgun Gothic', sans-serif; background-color: #F8F9FA; margin: 0; padding: 10px; }}
-                .player-box {{ background: #fff; border-radius: 15px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; min-height: 500px; display: flex; flex-direction: column; border: 2px solid #E0E0E0; }}
+            <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border: 2px solid #005AAB;">
+                <h3 style="color: #1A252F; margin-top: 0; font-family: sans-serif;">🎧 파트 {st.session_state.current_part} 재생 중</h3>
                 
-                /* 컨트롤 패널 스타일 */
-                .controls-container {{ background: #F0F7FF; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #CDE4FF; }}
-                select {{ width: 100%; padding: 12px; font-size: 18px; border-radius: 8px; border: 1px solid #005AAB; margin-bottom: 15px; font-weight: bold; color: #005AAB; outline: none; }}
+                <!-- 유튜브처럼 완벽한 진행바를 제공하는 표준 오디오 플레이어 -->
+                <audio id="myAudio" controls autoplay style="width: 100%; height: 54px; outline: none; margin-top: 10px;">
+                    <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+                </audio>
                 
-                /* 🚨 드래그 가능한 진행바(Seek Bar) 스타일 */
-                .progress-container {{ margin: 15px 0; display: flex; align-items: center; gap: 15px; }}
-                .progress-text {{ font-size: 16px; font-weight: bold; color: #005AAB; min-width: 50px; }}
-                input[type=range] {{ -webkit-appearance: none; width: 100%; background: transparent; }}
-                input[type=range]::-webkit-slider-runnable-track {{ width: 100%; height: 10px; cursor: pointer; background: #CDE4FF; border-radius: 5px; }}
-                input[type=range]::-webkit-slider-thumb {{ height: 24px; width: 24px; border-radius: 50%; background: #005AAB; cursor: pointer; -webkit-appearance: none; margin-top: -7px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: transform 0.1s; }}
-                input[type=range]::-webkit-slider-thumb:hover {{ transform: scale(1.2); }}
-                
-                .btn-group {{ display: flex; justify-content: space-between; gap: 10px; margin-top: 15px; }}
-                button {{ flex: 1; border: none; padding: 15px 0; font-size: 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-                button:active {{ transform: scale(0.95); }}
-                .btn-nav {{ background: #E0E0E0; color: #333; }}
-                .btn-play {{ background: #005AAB; color: #fff; flex: 2; }}
-                .btn-stop {{ background: #D32F2F; color: #fff; flex: 2; }}
-                
-                /* 문제 표시 영역 스타일 */
-                .q-title {{ color: #005AAB; font-size: 22px; margin-bottom: 10px; font-weight: bold; }}
-                .q-text {{ font-size: 26px; font-weight: bold; color: #1A252F; word-break: keep-all; line-height: 1.4; }}
-                .a-text {{ font-size: 22px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all; margin-top: 20px; }}
-                .label-a {{ color: #D32F2F; font-weight: bold; }}
-                hr {{ border: 1px solid #E0E0E0; margin: 20px 0; }}
-            </style>
-            </head>
-            <body>
-                <div class="player-box">
-                    <!-- 상단 컨트롤 패널 -->
-                    <div class="controls-container">
-                        <select id="partSelect" onchange="jumpToPart()"></select>
-                        
-                        <!-- 🚨 진행바 (Seek Bar) 추가 -->
-                        <div class="progress-container">
-                            <span class="progress-text" id="progressText">0%</span>
-                            <input type="range" id="seekBar" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="btn-group">
-                            <button class="btn-nav" onclick="prevQuestion()">⏮️ 이전</button>
-                            <button id="playBtn" class="btn-play" onclick="togglePlay()">▶️ 재생 시작</button>
-                            <button class="btn-nav" onclick="nextQuestion(false)">⏭️ 다음</button>
-                        </div>
-                    </div>
-                    
-                    <!-- 문제 표시 영역 -->
-                    <div id="displayArea"></div>
-                </div>
-
-                <script>
-                    const questions = {questions_json};
-                    let currentQIndex = 0;
-                    let isPlaying = false;
-                    let audioPlayer = new Audio();
-                    
-                    let currentChunks = [];
-                    let currentChunkIndex = 0;
-                    let isDragging = false;
-
-                    // 1. 파트 드롭다운 생성
-                    const selectEl = document.getElementById('partSelect');
-                    for(let i=0; i<questions.length; i+=10) {{
-                        let start = i + 1;
-                        let end = Math.min(i + 10, questions.length);
-                        let option = document.createElement('option');
-                        option.value = i;
-                        option.text = `파트 ${{Math.floor(i/10)+1}} (${{start}}번 ~ ${{end}}번)`;
-                        selectEl.appendChild(option);
-                    }}
-
-                    // 2. 텍스트 쪼개기 (구글 TTS 제한 방지)
-                    function splitText(text) {{
-                        let sentences = text.split(/(?<=[.!?\n])/g);
-                        let chunks = [];
-                        sentences.forEach(s => {{
-                            s = s.trim();
-                            if (!s) return;
-                            if (s.length > 150) {{
-                                for (let i = 0; i < s.length; i += 150) chunks.push(s.substring(i, i + 150));
-                            }} else {{
-                                chunks.push(s);
-                            }}
-                        }});
-                        return chunks;
-                    }}
-
-                    // 3. 화면에 문제 즉시 렌더링
-                    function renderQuestion(index) {{
-                        if (index >= questions.length) return;
-                        let q = questions[index];
-                        document.getElementById('displayArea').innerHTML = `
-                            <div class="q-title" id="qTitle">📝 문제 ${{q.id}}번 (대기 중)</div>
-                            <div class="q-text">Q: ${{q.q}}</div>
-                            <hr>
-                            <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
-                        `;
-                        selectEl.value = Math.floor(index / 10) * 10;
-                    }}
-
-                    // 4. 오디오 준비 및 재생 로직
-                    function prepareAudio(index) {{
-                        let q = questions[index];
-                        let textToRead = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
-                        currentChunks = splitText(textToRead);
-                        currentChunkIndex = 0;
-                        document.getElementById('seekBar').value = 0;
-                        document.getElementById('progressText').innerText = "0%";
-                    }}
-
-                    function playChunk(chunkIdx) {{
-                        if (chunkIdx >= currentChunks.length) {{
-                            // 🚨 현재 문제가 끝나면 자동으로 다음 문제로 넘어감 (무한 재생 핵심)
-                            nextQuestion(true); 
-                            return;
+                <p style="color: #888; font-size: 15px; margin-top: 15px; margin-bottom: 0; font-weight: bold;">
+                    재생이 완료되면 자동으로 다음 파트로 넘어갑니다 🔄
+                </p>
+            </div>
+            <script>
+                const audio = document.getElementById('myAudio');
+                audio.onended = function() {{
+                    // 오디오가 끝나면 부모 창(Streamlit)의 '다음 파트 자동재생' 버튼을 찾아 자동으로 클릭함
+                    const buttons = window.parent.document.querySelectorAll('button');
+                    buttons.forEach(btn => {{
+                        if(btn.innerText.includes('다음 파트 자동재생')) {{
+                            btn.click();
                         }}
-                        let chunk = currentChunks[chunkIdx];
-                        let url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=" + encodeURIComponent(chunk);
-                        audioPlayer.src = url;
-                        audioPlayer.playbackRate = 1.15;
-                        audioPlayer.play().catch(e => console.error(e));
-                        document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (재생 중 🔊)`;
-                    }}
-
-                    audioPlayer.onended = () => {{
-                        currentChunkIndex++;
-                        playChunk(currentChunkIndex);
-                    }};
-
-                    // 🚨 5. 진행바(Seek Bar) 업데이트 및 드래그 이벤트
-                    const seekBar = document.getElementById('seekBar');
-                    const progressText = document.getElementById('progressText');
-
-                    audioPlayer.ontimeupdate = () => {{
-                        if (isDragging || !audioPlayer.duration) return;
-                        let chunkProgress = audioPlayer.currentTime / audioPlayer.duration;
-                        let overallProgress = ((currentChunkIndex + chunkProgress) / currentChunks.length) * 100;
-                        seekBar.value = overallProgress;
-                        progressText.innerText = Math.floor(overallProgress) + "%";
-                    }};
-
-                    seekBar.oninput = () => {{
-                        isDragging = true;
-                        progressText.innerText = Math.floor(seekBar.value) + "%";
-                    }};
-
-                    seekBar.onchange = () => {{
-                        isDragging = false;
-                        let targetIdx = Math.floor((seekBar.value / 100) * currentChunks.length);
-                        if (targetIdx >= currentChunks.length) targetIdx = currentChunks.length - 1;
-                        currentChunkIndex = targetIdx;
-                        if (isPlaying) playChunk(currentChunkIndex);
-                    }};
-
-                    // 6. 버튼 컨트롤
-                    function togglePlay() {{
-                        if (isPlaying) {{
-                            audioPlayer.pause();
-                            isPlaying = false;
-                            document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (일시 정지 ⏸️)`;
-                        }} else {{
-                            isPlaying = true;
-                            if (!audioPlayer.src || audioPlayer.ended) {{
-                                prepareAudio(currentQIndex);
-                                playChunk(currentChunkIndex);
-                            }} else {{
-                                audioPlayer.play();
-                                document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (재생 중 🔊)`;
-                            }}
-                        }}
-                        updateBtn();
-                    }}
-
-                    function nextQuestion(isAutoPlay = false) {{
-                        if (currentQIndex < questions.length - 1) {{
-                            currentQIndex++;
-                            renderQuestion(currentQIndex);
-                            prepareAudio(currentQIndex);
-                            if (isPlaying || isAutoPlay) {{
-                                isPlaying = true;
-                                setTimeout(() => playChunk(0), 500); // 0.5초 대기 후 다음 문제 재생
-                            }}
-                            updateBtn();
-                        }} else {{
-                            isPlaying = false;
-                            updateBtn();
-                            document.getElementById('qTitle').innerText = "🎉 모든 문제 재생 완료!";
-                        }}
-                    }}
-
-                    function prevQuestion() {{
-                        if (currentQIndex > 0) {{
-                            currentQIndex--;
-                            renderQuestion(currentQIndex);
-                            prepareAudio(currentQIndex);
-                            if (isPlaying) playChunk(0);
-                            updateBtn();
-                        }}
-                    }}
-
-                    function jumpToPart() {{
-                        currentQIndex = parseInt(selectEl.value);
-                        renderQuestion(currentQIndex);
-                        prepareAudio(currentQIndex);
-                        if (isPlaying) playChunk(0);
-                    }}
-
-                    function updateBtn() {{
-                        const btn = document.getElementById('playBtn');
-                        if (isPlaying) {{
-                            btn.innerHTML = "⏹️ 일시 정지";
-                            btn.className = "btn-stop";
-                        }} else {{
-                            btn.innerHTML = "▶️ 재생 시작";
-                            btn.className = "btn-play";
-                        }}
-                    }}
-
-                    // 🚨 페이지 로드 시 즉시 1번 문제 렌더링 (빈 화면 방지)
-                    window.onload = () => {{
-                        if(questions.length > 0) {{
-                            renderQuestion(0);
-                            prepareAudio(0);
-                        }}
-                    }};
-                </script>
-            </body>
-            </html>
+                    }});
+                }};
+            </script>
             """
-            
-            components.html(html_player, height=800, scrolling=True)
+            components.html(html_player, height=200)
+
+            # 다음 파트로 넘어가는 버튼 (JS가 자동으로 누르지만, 수동으로도 누를 수 있음)
+            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+            with col_btn2:
+                if st.session_state.current_part < total_parts:
+                    if st.button("⏭️ 다음 파트 자동재생 (수동 클릭 가능)", use_container_width=True):
+                        st.session_state.current_part += 1
+                        st.rerun()
+                else:
+                    st.success("🎉 모든 파트의 재생이 완료되었습니다!")
+
+            # 현재 파트 문제 텍스트 보여주기
+            with st.expander("📖 현재 파트 문제 대본 보기 (클릭하여 펼치기)", expanded=True):
+                for q in current_questions:
+                    st.markdown(f"**Q{q['id']}. {q['q']}**")
+                    st.info(q['a'])
 
 # ==========================================
 # 6. AI 실전 모의면접
