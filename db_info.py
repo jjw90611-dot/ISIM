@@ -783,115 +783,187 @@ elif menu == "🗣️ 모범답변 예시":
 """, unsafe_allow_html=True)
 
 
+
 # ==========================================
-# 5. 핵심 문제 DB (전체 펼침 + 동영상 모드 가독성 개선)
+# 5. 핵심 문제 DB (모바일 완벽 호환 + 여성 음성 플레이어 탑재)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
     
     tab_list, tab_audio = st.tabs(["📜 문제 리스트 (전체 펼침)", "📺 동영상 재생 모드 (설거지용)"])
     
-    # --- 탭 1: 문제 리스트 (클릭 없이 모두 펼쳐서 보여줌) ---
+    # --- 탭 1: 문제 리스트 ---
     with tab_list:
         st.write("수록된 전체 문제 리스트입니다. 스크롤을 내려 모든 문제를 바로 확인할 수 있습니다.")
         search_query = st.text_input("🔍 문제 검색 (키워드를 입력하세요)")
-        
         st.markdown("---")
-        
         for q in QUESTIONS:
             if search_query in q['q'] or search_query in q['a']:
                 st.markdown(f"#### 📝 Q{q['id']}. {q['q']}")
                 st.info(f"**[답변]**\n\n{q['a']}")
                 st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- 탭 2: 동영상 재생 모드 (가독성 극대화) ---
+    # --- 탭 2: 동영상 재생 모드 (모바일 전용 플레이어) ---
     with tab_audio:
-        st.subheader("📺 핵심 문제 동영상 재생 모드")
-        st.markdown("설거지나 이동 중에 편하게 듣고 볼 수 있는 모드입니다. **구글 API 차단을 막기 위해 10문제씩 나누어 재생**합니다.")
+        st.subheader("📺 모바일 최적화 동영상 재생 모드")
+        st.markdown("휴대폰 화면이 켜진 상태에서 **아래의 재생 버튼을 누르면 여성 음성으로 끊김 없이 연속 재생**됩니다.")
         
         if not QUESTIONS:
             st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
         else:
-            # 10문제씩 파트 나누기
             chunk_size = 10
             total_q = len(QUESTIONS)
-            parts = []
-            for i in range(0, total_q, chunk_size):
-                start = i + 1
-                end = min(i + chunk_size, total_q)
-                parts.append(f"파트 {i//chunk_size + 1} ({start}번 ~ {end}번)")
+            parts = [f"파트 {i//chunk_size + 1} ({i+1}번 ~ {min(i+chunk_size, total_q)}번)" for i in range(0, total_q, chunk_size)]
             
-            # 파트 선택 드롭다운
             selected_part = st.selectbox("🎧 재생할 파트를 선택하세요", parts)
+            part_idx = parts.index(selected_part)
+            start_idx = part_idx * chunk_size
+            current_questions = QUESTIONS[start_idx:start_idx + chunk_size]
             
-            if st.button("▶️ 선택한 파트 재생 시작", type="primary"):
-                part_idx = parts.index(selected_part)
-                start_idx = part_idx * chunk_size
-                end_idx = start_idx + chunk_size
-                current_questions = QUESTIONS[start_idx:end_idx]
+            # JS로 넘길 데이터 가공 (띄어쓰기 및 줄바꿈 완벽 교정)
+            js_questions = []
+            for q in current_questions:
+                ans = q['a']
+                # 1. 탭이나 연속된 공백을 하나로 압축
+                ans = re.sub(r'[ \t]+', ' ', ans)
+                # 2. 번호(1. 2.) 앞에 줄바꿈 강제 추가
+                ans = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', ans).strip()
+                # 3. HTML용 줄바꿈 처리
+                formatted_a = ans.replace('\n', '<br>')
+                # 4. TTS 읽기용 텍스트 (특수기호 제거)
+                plain_a = re.sub(r'[*_~]', '', ans)
                 
-                subtitle_area = st.empty()
-                audio_area = st.empty()
-                
-                st.success(f"{selected_part} 재생을 시작합니다!")
-                
-                for q in current_questions:
-                    text_to_read = f"문제 {q['id']}번. {q['q']} 답변입니다. {q['a']}"
-                    
-                    # 💡 가독성 개선: 띄어쓰기 및 줄바꿈 완벽 교정
-                    formatted_answer = q['a']
-                    
-                    # 1. 탭(\t)이나 여러 개의 연속된 공백을 하나의 공백으로 변환 (번호 뒤 넓은 공백 문제 해결)
-                    formatted_answer = re.sub(r'[ \t]+', ' ', formatted_answer)
-                    
-                    # 2. 번호(1. 2. 등) 앞에 줄바꿈이 없으면 강제로 띄워주기
-                    formatted_answer = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', formatted_answer).strip()
-                    
-                    # 3. 파이썬의 줄바꿈(\n)을 HTML 줄바꿈(<br>)으로 변환
-                    formatted_answer = formatted_answer.replace('\n', '<br>')
-                    
-                    # 📺 가독성을 높인 동영상 스타일 UI (답변 좌측 정렬 + 단어 끊김 방지)
-                    subtitle_area.markdown(
-                        f"""
-                        <div style="
-                            padding: 50px 40px; 
-                            border-radius: 15px; 
-                            background-color: #FFFFFF; 
-                            border: 2px solid #E0E0E0;
-                            min-height: 400px; 
-                            display: flex; 
-                            flex-direction: column; 
-                            justify-content: center;
-                            box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
-                        ">
-                            <h3 style="color: #005AAB; margin-bottom: 20px; font-size: 26px; text-align: center;">📝 문제 {q['id']}번</h3>
-                            <p style="font-size: 32px; font-weight: bold; line-height: 1.5; color: #1A252F; text-align: center; word-break: keep-all;">Q: {q['q']}</p>
-                            <hr style="border: 1px solid #E0E0E0; width: 100%; margin: 30px 0;">
-                            <div style="font-size: 26px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all;">
-                                <span style="color: #D32F2F; font-weight: bold;">A:</span><br><br>
-                                {formatted_answer}
-                            </div>
-                        </div>
-                        """, 
-                        unsafe_allow_html=True
-                    )
-                    
-                    # 🚨 우회된 강력한 TTS 함수 호출
-                    audio_bytes = get_audio_bytes(text_to_read)
-                    
-                    # 글자 수에 비례하여 대기 시간 계산 (글자당 0.16초로 넉넉하게)
-                    wait_time = len(text_to_read) * 0.16 
-                    
-                    if audio_bytes:
-                        audio_area.audio(audio_bytes, format="audio/mp3", autoplay=True)
-                    else:
-                        audio_area.error("음성 생성에 실패했습니다. 다음 문제로 넘어갑니다.")
+                js_questions.append({
+                    "id": q['id'],
+                    "q": q['q'],
+                    "formatted_a": formatted_a,
+                    "plain_a": plain_a
+                })
+            
+            questions_json = json.dumps(js_questions, ensure_ascii=False)
+            
+            # 🚨 [핵심] 모바일 자동재생 및 여성 음성을 지원하는 HTML/JS 플레이어 🚨
+            html_player = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+                body {{ font-family: 'Malgun Gothic', sans-serif; background-color: #F8F9FA; margin: 0; padding: 10px; }}
+                .player-box {{ background: #fff; border-radius: 15px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; min-height: 450px; display: flex; flex-direction: column; justify-content: center; border: 2px solid #E0E0E0; }}
+                .btn-play {{ background: #005AAB; color: #fff; border: none; padding: 20px 40px; font-size: 22px; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,90,171,0.3); transition: 0.3s; }}
+                .btn-play:active {{ transform: scale(0.95); }}
+                .q-title {{ color: #005AAB; font-size: 24px; margin-bottom: 15px; }}
+                .q-text {{ font-size: 28px; font-weight: bold; color: #1A252F; word-break: keep-all; line-height: 1.4; }}
+                .a-text {{ font-size: 22px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all; margin-top: 20px; }}
+                .label-a {{ color: #D32F2F; font-weight: bold; }}
+                hr {{ border: 1px solid #E0E0E0; margin: 25px 0; }}
+            </style>
+            </head>
+            <body>
+                <div id="app" class="player-box">
+                    <button class="btn-play" onclick="startPlay()">▶️ {selected_part} 재생 시작</button>
+                    <p style="margin-top:20px; color:#666; font-size:16px;">버튼을 누르면 기기에 내장된 <b>여성 음성</b>으로 연속 재생됩니다.<br>(휴대폰 화면이 꺼지지 않게 유지해주세요)</p>
+                </div>
+
+                <script>
+                    const questions = {questions_json};
+                    let currentIndex = 0;
+
+                    // 기기 내장 한국어 여성 음성 찾기
+                    function getFemaleVoice() {{
+                        const voices = window.speechSynthesis.getVoices();
+                        const koVoices = voices.filter(v => v.lang.includes('ko'));
                         
-                    # 음성 길이나 자막 읽을 시간만큼 대기 후 다음 문제로 넘어감
-                    time.sleep(wait_time)
-                    
-                st.balloons()
-                st.success(f"{selected_part} 재생이 완료되었습니다! 다음 파트를 선택해주세요.")
+                        // 1순위: 이름에 여성, Female, Yuna(아이폰), Sora 등이 들어간 음성
+                        let voice = koVoices.find(v => v.name.includes('Yuna') || v.name.includes('Sora') || v.name.includes('Female') || v.name.includes('여성'));
+                        // 2순위: 삼성/구글 기본 음성 (대부분 기본이 여성임)
+                        if (!voice && koVoices.length > 0) {{
+                            voice = koVoices.find(v => v.name.includes('Google') || v.name.includes('Samsung'));
+                        }}
+                        // 3순위: 아무 한국어 음성
+                        if (!voice && koVoices.length > 0) voice = koVoices[0];
+                        
+                        return voice;
+                    }}
+
+                    function startPlay() {{
+                        if (questions.length === 0) return;
+                        currentIndex = 0;
+                        window.speechSynthesis.cancel(); // 기존 음성 초기화
+                        playNextQuestion();
+                    }}
+
+                    function playNextQuestion() {{
+                        if (currentIndex >= questions.length) {{
+                            document.getElementById('app').innerHTML = `
+                                <h2 style="color: #4CAF50; font-size: 30px;">🎉 파트 재생이 완료되었습니다!</h2>
+                                <p style="color: #666; font-size: 18px;">위의 드롭다운에서 다음 파트를 선택해주세요.</p>
+                            `;
+                            return;
+                        }}
+
+                        const q = questions[currentIndex];
+                        
+                        // 화면 업데이트
+                        document.getElementById('app').innerHTML = `
+                            <div class="q-title">📝 문제 ${{q.id}}번</div>
+                            <div class="q-text">Q: ${{q.q}}</div>
+                            <hr>
+                            <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
+                        `;
+
+                        // 모바일 끊김 방지를 위해 문장을 마침표/줄바꿈 기준으로 쪼개서 큐(Queue)에 넣음
+                        const fullText = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
+                        const chunks = fullText.split(/(?<=[.!?\n])/); 
+                        let chunkIndex = 0;
+
+                        function speakNextChunk() {{
+                            if (chunkIndex >= chunks.length) {{
+                                currentIndex++;
+                                setTimeout(playNextQuestion, 1000); // 다음 문제로 넘어가기 전 1초 대기
+                                return;
+                            }}
+
+                            let text = chunks[chunkIndex].trim();
+                            if (!text) {{
+                                chunkIndex++;
+                                speakNextChunk();
+                                return;
+                            }}
+
+                            const utterance = new SpeechSynthesisUtterance(text);
+                            utterance.lang = 'ko-KR';
+                            utterance.rate = 0.95; // 약간 또박또박하게 속도 조절
+                            
+                            const voice = getFemaleVoice();
+                            if (voice) utterance.voice = voice;
+
+                            utterance.onend = () => {{
+                                chunkIndex++;
+                                speakNextChunk();
+                            }};
+                            
+                            utterance.onerror = (e) => {{
+                                console.error("TTS Error", e);
+                                chunkIndex++;
+                                speakNextChunk();
+                            }};
+
+                            window.speechSynthesis.speak(utterance);
+                        }}
+
+                        speakNextChunk();
+                    }}
+
+                    // 크롬/사파리 음성 목록 사전 로드
+                    window.speechSynthesis.onvoiceschanged = getFemaleVoice;
+                </script>
+            </body>
+            </html>
+            """
+            
+            # Streamlit에 HTML 플레이어 삽입 (높이를 넉넉하게 주어 스크롤 방지)
+            components.html(html_player, height=700, scrolling=True)
 
 
 # ==========================================
