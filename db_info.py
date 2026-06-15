@@ -21,22 +21,17 @@ def get_audio_bytes(text):
     try:
         sentences = re.split(r'(?<=[.!?]) +|\n', text)
         audio_data = b""
-        
         for sentence in sentences:
             sentence = sentence.strip()
             if not sentence: continue
-            
             chunks = [sentence[i:i+100] for i in range(0, len(sentence), 100)]
             for chunk in chunks:
                 encoded = urllib.parse.quote(chunk)
                 url = f"https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q={encoded}"
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
+                headers = {"User-Agent": "Mozilla/5.0"}
                 res = requests.get(url, headers=headers, timeout=5)
                 if res.status_code == 200:
                     audio_data += res.content
-                    
         return audio_data if audio_data else None
     except Exception as e:
         return None
@@ -50,14 +45,10 @@ def apply_modern_ui():
     @font-face {
         font-family: 'SeoulNamsanM';
         src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SeoulNamsanM.woff') format('woff');
-        font-weight: normal;
-        font-style: normal;
+        font-weight: normal; font-style: normal;
     }
     html, body, [class*="css"], [class*="st-"], p, div, span, button, input {
-        font-family: 'SeoulNamsanM', sans-serif;
-        font-size: 18px; 
-        line-height: 1.7; 
-        color: #2C3E50; 
+        font-family: 'SeoulNamsanM', sans-serif; font-size: 18px; line-height: 1.7; color: #2C3E50; 
     }
     .material-symbols-rounded, [data-testid="stIconMaterial"], .stIcon {
         font-family: 'Material Symbols Rounded' !important;
@@ -83,7 +74,7 @@ def apply_modern_ui():
 apply_modern_ui()
 
 # ==========================================
-# [데이터베이스] 기출/예상문제
+# [데이터베이스] 기출/예상문제 (여기에 데이터를 채워주세요)
 # ==========================================
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
@@ -535,7 +526,7 @@ st.sidebar.markdown("---")
 st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합격입니다. 두괄식으로 핵심 키워드를 먼저 말하는 연습을 하세요!")
 
 # ==========================================
-# 0. 홈 (가상 면접장)
+# 0~4. 텍스트 메뉴들 (생략 없이 원본 유지)
 # ==========================================
 if menu == "🏠 홈 (가상 면접장)":
     st.title("🏢 산업안전지도사 가상 면접장")
@@ -565,9 +556,6 @@ if menu == "🏠 홈 (가상 면접장)":
             st.markdown("**[면접관]**")
             st.markdown(feedback)
 
-# ==========================================
-# 1~4. 텍스트 메뉴들 (생략 없이 원본 유지)
-# ==========================================
 elif menu == "📝 들어가며 (인사말)":
     st.title("🎯 들어가며")
     st.markdown("안녕하세요! 조진우입니다...\n\n(이하 원본 텍스트 동일)")
@@ -586,7 +574,7 @@ elif menu == "🗣️ 모범답변 예시":
     st.markdown("### 🗣️ 상황별 모범 답변 대본...")
 
 # ==========================================
-# 5. 핵심 문제 DB (모바일 완벽 호환 + 기본 음성 플레이어 탑재)
+# 5. 핵심 문제 DB (모바일 완벽 호환 + 오디오 잠금 해제 트릭 적용)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
@@ -636,7 +624,7 @@ elif menu == "📚 핵심 문제 DB":
             
             questions_json = json.dumps(js_questions, ensure_ascii=False)
             
-            # 🚨 [수정됨] 모바일 브라우저 호환성을 100%로 끌어올린 HTML/JS 플레이어 🚨
+            # 🚨 [최종 수정] 모바일 오디오 잠금 해제(Unlock) 트릭 및 상태 표시기 추가 🚨
             html_player = f"""
             <!DOCTYPE html>
             <html>
@@ -644,24 +632,28 @@ elif menu == "📚 핵심 문제 DB":
             <style>
                 body {{ font-family: 'Malgun Gothic', sans-serif; background-color: #F8F9FA; margin: 0; padding: 10px; }}
                 .player-box {{ background: #fff; border-radius: 15px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; min-height: 450px; display: flex; flex-direction: column; justify-content: center; border: 2px solid #E0E0E0; }}
-                .btn-play {{ background: #005AAB; color: #fff; border: none; padding: 20px 40px; font-size: 22px; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,90,171,0.3); transition: 0.3s; }}
+                .btn-play {{ background: #005AAB; color: #fff; border: none; padding: 20px 40px; font-size: 22px; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,90,171,0.3); transition: 0.3s; width: 100%; max-width: 400px; margin: 0 auto; }}
                 .btn-play:active {{ transform: scale(0.95); }}
+                .btn-stop {{ background: #D32F2F; margin-top: 20px; }}
                 .q-title {{ color: #005AAB; font-size: 24px; margin-bottom: 15px; font-weight: bold; }}
                 .q-text {{ font-size: 28px; font-weight: bold; color: #1A252F; word-break: keep-all; line-height: 1.4; }}
                 .a-text {{ font-size: 22px; line-height: 1.8; color: #2C3E50; text-align: left; word-break: keep-all; margin-top: 20px; }}
                 .label-a {{ color: #D32F2F; font-weight: bold; }}
+                #status {{ margin-top: 15px; font-size: 18px; font-weight: bold; color: #E65100; }}
                 hr {{ border: 1px solid #E0E0E0; margin: 25px 0; }}
             </style>
             </head>
             <body>
                 <div id="app" class="player-box">
                     <button class="btn-play" onclick="startPlay()">▶️ {selected_part} 재생 시작</button>
+                    <div id="status"></div>
                     <p style="margin-top:20px; color:#666; font-size:16px;">버튼을 누르면 기기에 내장된 <b>기본 음성(1.15배속)</b>으로 연속 재생됩니다.<br>(휴대폰 화면이 꺼지지 않게 유지해주세요)</p>
                 </div>
 
                 <script>
                     const questions = {questions_json};
                     let currentIndex = 0;
+                    let isPlaying = false;
 
                     function getKoreanVoice() {{
                         const voices = window.speechSynthesis.getVoices();
@@ -673,43 +665,76 @@ elif menu == "📚 핵심 문제 DB":
 
                     function startPlay() {{
                         if (questions.length === 0) {{
-                            alert("재생할 문제가 없습니다.");
+                            document.getElementById('status').innerText = "❌ 재생할 문제가 없습니다.";
                             return;
                         }}
-                        currentIndex = 0;
-                        window.speechSynthesis.cancel(); // 기존 음성 초기화
-                        playNextQuestion();
+
+                        document.getElementById('status').innerText = "⏳ 오디오 권한 요청 중... (잠시만 기다려주세요)";
+                        
+                        // 1. 기존 음성 큐 강제 초기화
+                        window.speechSynthesis.cancel();
+                        
+                        // 2. 모바일 오디오 잠금 해제 트릭 (버튼 클릭과 동시에 무조건 실행되어야 함)
+                        const unlockUtterance = new SpeechSynthesisUtterance('재생을 시작합니다.');
+                        unlockUtterance.lang = 'ko-KR';
+                        unlockUtterance.rate = 1.15;
+                        
+                        // 잠금 해제 음성이 끝나면 실제 문제 재생 시작
+                        unlockUtterance.onend = function() {{
+                            document.getElementById('status').innerText = "";
+                            currentIndex = 0;
+                            isPlaying = true;
+                            playNextQuestion();
+                        }};
+                        
+                        // 만약 에러가 나더라도 강제로 다음으로 넘김
+                        unlockUtterance.onerror = function(e) {{
+                            document.getElementById('status').innerText = "⚠️ 오디오 권한 오류 발생. 그래도 재생을 시도합니다.";
+                            currentIndex = 0;
+                            isPlaying = true;
+                            playNextQuestion();
+                        }};
+
+                        window.speechSynthesis.speak(unlockUtterance);
                     }}
 
                     function playNextQuestion() {{
+                        if (!isPlaying) return;
+
                         if (currentIndex >= questions.length) {{
                             document.getElementById('app').innerHTML = `
                                 <h2 style="color: #4CAF50; font-size: 30px;">🎉 파트 재생이 완료되었습니다!</h2>
                                 <p style="color: #666; font-size: 18px;">위의 드롭다운에서 다음 파트를 선택해주세요.</p>
+                                <button class="btn-play" onclick="location.reload()">🔄 처음으로 돌아가기</button>
                             `;
                             return;
                         }}
 
                         const q = questions[currentIndex];
                         
-                        // 화면 업데이트 (재생 중 표시 추가)
+                        // 화면 업데이트 및 정지 버튼 추가
                         document.getElementById('app').innerHTML = `
                             <div class="q-title">📝 문제 ${{q.id}}번 (재생 중 🔊)</div>
                             <div class="q-text">Q: ${{q.q}}</div>
                             <hr>
                             <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
+                            <button class="btn-play btn-stop" onclick="stopPlay()">⏹️ 재생 정지</button>
                         `;
 
                         const fullText = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
                         
-                        // 🚨 [핵심 수정] 아이폰/사파리에서 에러를 뿜는 Lookbehind 정규식 제거하고 안전한 방식으로 분할
-                        const chunks = fullText.match(/[^.!?\n]+[.!?\n]*/g) || [fullText];
+                        // 🚨 정규식 에러를 원천 차단하는 가장 안전한 문장 분할 방식
+                        let textToSpeak = fullText.replace(/([.!?\n])/g, "$1|").split("|");
+                        let chunks = textToSpeak.filter(t => t.trim().length > 0);
+                        
                         let chunkIndex = 0;
 
                         function speakNextChunk() {{
+                            if (!isPlaying) return;
+
                             if (chunkIndex >= chunks.length) {{
                                 currentIndex++;
-                                setTimeout(playNextQuestion, 1000); // 다음 문제로 넘어가기 전 1초 대기
+                                setTimeout(playNextQuestion, 1000); // 다음 문제 전 1초 대기
                                 return;
                             }}
 
@@ -722,7 +747,7 @@ elif menu == "📚 핵심 문제 DB":
 
                             const utterance = new SpeechSynthesisUtterance(text);
                             utterance.lang = 'ko-KR';
-                            utterance.rate = 1.15; // 1.15배속
+                            utterance.rate = 1.15;
                             
                             const voice = getKoreanVoice();
                             if (voice) utterance.voice = voice;
@@ -744,13 +769,24 @@ elif menu == "📚 핵심 문제 DB":
                         speakNextChunk();
                     }}
 
+                    function stopPlay() {{
+                        isPlaying = false;
+                        window.speechSynthesis.cancel();
+                        document.getElementById('app').innerHTML = `
+                            <h2 style="color: #D32F2F; font-size: 30px;">⏹️ 재생이 정지되었습니다.</h2>
+                            <button class="btn-play" onclick="location.reload()">🔄 다시 시작하기</button>
+                        `;
+                    }}
+
+                    // 브라우저 음성 목록 사전 로드
+                    window.speechSynthesis.getVoices();
                     window.speechSynthesis.onvoiceschanged = getKoreanVoice;
                 </script>
             </body>
             </html>
             """
             
-            components.html(html_player, height=700, scrolling=True)
+            components.html(html_player, height=750, scrolling=True)
 
 # ==========================================
 # 6. AI 실전 모의면접
