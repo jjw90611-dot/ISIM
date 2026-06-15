@@ -49,6 +49,7 @@ apply_modern_ui()
 # ==========================================
 # [데이터베이스] 기출/예상문제
 # ==========================================
+# 선생님, 아래 대괄호 [ ] 안에 417개의 문제 데이터를 붙여넣어 주세요!
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
     {"id": 2, "q": "산업안전지도사 기계분야의 직무에 대해 말해보세요?", "a": "산안법 제145조 제1항에 따라 등록한 기계안전지도사의 업무범위는\n1. 유해위험방지계획서, 안전보건개선계획서, 공정안전보고서, 기계기구설비의 작업계획서 및 MSDS 작성 지도\n2. 정전기·전자파로 인한 재해예방, 자동화 및 자동제어설비, 방폭전기설비 및 전력시스템 등 기술지도\n3. 전기, 기계기구설비, 화학설비 및 공정에 대한 설계·시공·배치·유지보수에 관한 안전성평가 및 기술지도\n4. 인화성가스, 액체, 폭발성물질, 급성독성 물질 및 방폭설비 등에 관한 안전성평가 및 기술지도\n5. 크레인 등 기계·기구, 전기작업의 안전성평가\n6. 그 밖의 교육 또는 기술지도 업무\n\n*Tip : 유.정.전.인.크"},
@@ -477,7 +478,6 @@ QUESTIONS = [
     
 ]
 
-
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
@@ -547,7 +547,7 @@ elif menu == "🗣️ 모범답변 예시":
     st.markdown("### 🗣️ 상황별 모범 답변 대본...")
 
 # ==========================================
-# 5. 핵심 문제 DB (무한 자동재생 + 구간이동 완벽 지원)
+# 5. 핵심 문제 DB (무한 자동재생 + 드래그 진행바 완벽 지원)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
@@ -575,12 +575,9 @@ elif menu == "📚 핵심 문제 DB":
             js_questions = []
             for q in QUESTIONS:
                 ans = q['a']
-                # 가독성 포맷팅 (화면 표시용)
                 formatted_a = re.sub(r'[ \t]+', ' ', ans)
                 formatted_a = re.sub(r'(?<!\n)\s*(\d+\.)', r'\n\n\1', formatted_a).strip()
                 formatted_a = formatted_a.replace('\n', '<br>')
-                
-                # 읽기용 텍스트 (특수문자 제거)
                 plain_a = re.sub(r'[*_~]', '', ans)
                 
                 js_questions.append({
@@ -592,7 +589,7 @@ elif menu == "📚 핵심 문제 DB":
             
             questions_json = json.dumps(js_questions, ensure_ascii=False)
             
-            # 🚨 [혁신] 브라우저 자체에서 전체 문제를 관리하고 구글 TTS를 실시간 호출하는 HTML 플레이어
+            # 🚨 [혁신] 드래그 가능한 진행바(Seek Bar)와 즉시 렌더링이 포함된 완벽한 플레이어
             html_player = f"""
             <!DOCTYPE html>
             <html>
@@ -602,9 +599,18 @@ elif menu == "📚 핵심 문제 DB":
                 .player-box {{ background: #fff; border-radius: 15px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; min-height: 500px; display: flex; flex-direction: column; border: 2px solid #E0E0E0; }}
                 
                 /* 컨트롤 패널 스타일 */
-                .controls-container {{ background: #F0F7FF; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #CDE4FF; }}
+                .controls-container {{ background: #F0F7FF; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #CDE4FF; }}
                 select {{ width: 100%; padding: 12px; font-size: 18px; border-radius: 8px; border: 1px solid #005AAB; margin-bottom: 15px; font-weight: bold; color: #005AAB; outline: none; }}
-                .btn-group {{ display: flex; justify-content: space-between; gap: 10px; }}
+                
+                /* 🚨 드래그 가능한 진행바(Seek Bar) 스타일 */
+                .progress-container {{ margin: 15px 0; display: flex; align-items: center; gap: 15px; }}
+                .progress-text {{ font-size: 16px; font-weight: bold; color: #005AAB; min-width: 50px; }}
+                input[type=range] {{ -webkit-appearance: none; width: 100%; background: transparent; }}
+                input[type=range]::-webkit-slider-runnable-track {{ width: 100%; height: 10px; cursor: pointer; background: #CDE4FF; border-radius: 5px; }}
+                input[type=range]::-webkit-slider-thumb {{ height: 24px; width: 24px; border-radius: 50%; background: #005AAB; cursor: pointer; -webkit-appearance: none; margin-top: -7px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: transform 0.1s; }}
+                input[type=range]::-webkit-slider-thumb:hover {{ transform: scale(1.2); }}
+                
+                .btn-group {{ display: flex; justify-content: space-between; gap: 10px; margin-top: 15px; }}
                 button {{ flex: 1; border: none; padding: 15px 0; font-size: 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
                 button:active {{ transform: scale(0.95); }}
                 .btn-nav {{ background: #E0E0E0; color: #333; }}
@@ -624,28 +630,35 @@ elif menu == "📚 핵심 문제 DB":
                     <!-- 상단 컨트롤 패널 -->
                     <div class="controls-container">
                         <select id="partSelect" onchange="jumpToPart()"></select>
+                        
+                        <!-- 🚨 진행바 (Seek Bar) 추가 -->
+                        <div class="progress-container">
+                            <span class="progress-text" id="progressText">0%</span>
+                            <input type="range" id="seekBar" min="0" max="100" value="0">
+                        </div>
+
                         <div class="btn-group">
                             <button class="btn-nav" onclick="prevQuestion()">⏮️ 이전</button>
                             <button id="playBtn" class="btn-play" onclick="togglePlay()">▶️ 재생 시작</button>
-                            <button class="btn-nav" onclick="nextQuestion()">⏭️ 다음</button>
+                            <button class="btn-nav" onclick="nextQuestion(false)">⏭️ 다음</button>
                         </div>
                     </div>
                     
                     <!-- 문제 표시 영역 -->
-                    <div id="displayArea">
-                        <h2 style="color:#666; margin-top:50px;">위의 [▶️ 재생 시작] 버튼을 누르세요.</h2>
-                        <p style="color:#888;">파트 1부터 마지막 문제까지 자동으로 넘어갑니다.</p>
-                    </div>
+                    <div id="displayArea"></div>
                 </div>
 
                 <script>
                     const questions = {questions_json};
-                    let currentIndex = 0;
+                    let currentQIndex = 0;
                     let isPlaying = false;
                     let audioPlayer = new Audio();
-                    let chunkQueue = [];
                     
-                    // 1. 파트 드롭다운 생성 (10문제씩)
+                    let currentChunks = [];
+                    let currentChunkIndex = 0;
+                    let isDragging = false;
+
+                    // 1. 파트 드롭다운 생성
                     const selectEl = document.getElementById('partSelect');
                     for(let i=0; i<questions.length; i+=10) {{
                         let start = i + 1;
@@ -656,144 +669,143 @@ elif menu == "📚 핵심 문제 DB":
                         selectEl.appendChild(option);
                     }}
 
-                    // 2. 텍스트를 구글 TTS가 읽을 수 있게 100자 내외로 쪼개는 함수
+                    // 2. 텍스트 쪼개기 (구글 TTS 제한 방지)
                     function splitText(text) {{
                         let sentences = text.split(/(?<=[.!?\n])/g);
                         let chunks = [];
                         sentences.forEach(s => {{
                             s = s.trim();
                             if (!s) return;
-                            for (let i = 0; i < s.length; i += 100) {{
-                                chunks.push(s.substring(i, i + 100));
+                            if (s.length > 150) {{
+                                for (let i = 0; i < s.length; i += 150) chunks.push(s.substring(i, i + 150));
+                            }} else {{
+                                chunks.push(s);
                             }}
                         }});
                         return chunks;
                     }}
 
-                    // 3. 오디오 재생 코어 로직
-                    audioPlayer.onended = () => {{
-                        playNextChunk();
-                    }};
-                    
-                    audioPlayer.onerror = () => {{
-                        console.error("Audio Error, skipping chunk");
-                        playNextChunk();
-                    }};
-
-                    function playNextChunk() {{
-                        if (!isPlaying) return;
-                        
-                        // 현재 문제의 모든 청크를 다 읽었을 때 -> 다음 문제로 자동 넘어감!
-                        if (chunkQueue.length === 0) {{
-                            currentIndex++;
-                            if (currentIndex >= questions.length) {{
-                                isPlaying = false;
-                                updateUI();
-                                document.getElementById('displayArea').innerHTML = `<h2 style="color:#4CAF50;">🎉 모든 문제 재생이 완료되었습니다!</h2>`;
-                                return;
-                            }}
-                            
-                            // 파트가 바뀌면 드롭다운도 자동으로 변경
-                            selectEl.value = Math.floor(currentIndex / 10) * 10;
-                            
-                            updateUI();
-                            // 🚨 문제 간 넘어가는 속도: 0.5초 (500ms) 대기 후 바로 다음 문제 재생
-                            setTimeout(() => {{
-                                if (isPlaying) playQuestion(currentIndex);
-                            }}, 500);
-                            return;
-                        }}
-
-                        let chunk = chunkQueue.shift();
-                        let url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=" + encodeURIComponent(chunk);
-                        
-                        audioPlayer.src = url;
-                        audioPlayer.playbackRate = 1.15; // 1.15배속
-                        audioPlayer.play().catch(e => {{
-                            console.error(e);
-                            playNextChunk();
-                        }});
-                    }}
-
-                    function playQuestion(index) {{
+                    // 3. 화면에 문제 즉시 렌더링
+                    function renderQuestion(index) {{
                         if (index >= questions.length) return;
                         let q = questions[index];
-                        
-                        // 화면 업데이트
                         document.getElementById('displayArea').innerHTML = `
-                            <div class="q-title">📝 문제 ${{q.id}}번 (재생 중 🔊)</div>
+                            <div class="q-title" id="qTitle">📝 문제 ${{q.id}}번 (대기 중)</div>
                             <div class="q-text">Q: ${{q.q}}</div>
                             <hr>
                             <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
                         `;
-
-                        // 읽을 텍스트 세팅
-                        let textToRead = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
-                        chunkQueue = splitText(textToRead);
-                        playNextChunk();
+                        selectEl.value = Math.floor(index / 10) * 10;
                     }}
 
-                    // 4. 버튼 컨트롤 함수들
+                    // 4. 오디오 준비 및 재생 로직
+                    function prepareAudio(index) {{
+                        let q = questions[index];
+                        let textToRead = `문제 ${{q.id}}번. ${{q.q}}. 답변입니다. ${{q.plain_a}}`;
+                        currentChunks = splitText(textToRead);
+                        currentChunkIndex = 0;
+                        document.getElementById('seekBar').value = 0;
+                        document.getElementById('progressText').innerText = "0%";
+                    }}
+
+                    function playChunk(chunkIdx) {{
+                        if (chunkIdx >= currentChunks.length) {{
+                            // 🚨 현재 문제가 끝나면 자동으로 다음 문제로 넘어감 (무한 재생 핵심)
+                            nextQuestion(true); 
+                            return;
+                        }}
+                        let chunk = currentChunks[chunkIdx];
+                        let url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=ko&client=tw-ob&q=" + encodeURIComponent(chunk);
+                        audioPlayer.src = url;
+                        audioPlayer.playbackRate = 1.15;
+                        audioPlayer.play().catch(e => console.error(e));
+                        document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (재생 중 🔊)`;
+                    }}
+
+                    audioPlayer.onended = () => {{
+                        currentChunkIndex++;
+                        playChunk(currentChunkIndex);
+                    }};
+
+                    // 🚨 5. 진행바(Seek Bar) 업데이트 및 드래그 이벤트
+                    const seekBar = document.getElementById('seekBar');
+                    const progressText = document.getElementById('progressText');
+
+                    audioPlayer.ontimeupdate = () => {{
+                        if (isDragging || !audioPlayer.duration) return;
+                        let chunkProgress = audioPlayer.currentTime / audioPlayer.duration;
+                        let overallProgress = ((currentChunkIndex + chunkProgress) / currentChunks.length) * 100;
+                        seekBar.value = overallProgress;
+                        progressText.innerText = Math.floor(overallProgress) + "%";
+                    }};
+
+                    seekBar.oninput = () => {{
+                        isDragging = true;
+                        progressText.innerText = Math.floor(seekBar.value) + "%";
+                    }};
+
+                    seekBar.onchange = () => {{
+                        isDragging = false;
+                        let targetIdx = Math.floor((seekBar.value / 100) * currentChunks.length);
+                        if (targetIdx >= currentChunks.length) targetIdx = currentChunks.length - 1;
+                        currentChunkIndex = targetIdx;
+                        if (isPlaying) playChunk(currentChunkIndex);
+                    }};
+
+                    // 6. 버튼 컨트롤
                     function togglePlay() {{
                         if (isPlaying) {{
-                            // 정지
+                            audioPlayer.pause();
                             isPlaying = false;
-                            audioPlayer.pause();
-                            updateUI();
+                            document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (일시 정지 ⏸️)`;
                         }} else {{
-                            // 재생
                             isPlaying = true;
-                            playQuestion(currentIndex);
-                            updateUI();
-                        }}
-                    }}
-
-                    function jumpToPart() {{
-                        currentIndex = parseInt(selectEl.value);
-                        if (isPlaying) {{
-                            audioPlayer.pause();
-                            chunkQueue = [];
-                            playQuestion(currentIndex);
-                        }} else {{
-                            let q = questions[currentIndex];
-                            document.getElementById('displayArea').innerHTML = `
-                                <div class="q-title">📝 문제 ${{q.id}}번 (대기 중)</div>
-                                <div class="q-text">Q: ${{q.q}}</div>
-                                <hr>
-                                <div class="a-text"><span class="label-a">A:</span><br><br>${{q.formatted_a}}</div>
-                            `;
-                        }}
-                    }}
-
-                    function nextQuestion() {{
-                        if(currentIndex < questions.length - 1) {{
-                            currentIndex++;
-                            selectEl.value = Math.floor(currentIndex / 10) * 10;
-                            if(isPlaying) {{
-                                audioPlayer.pause();
-                                chunkQueue = [];
-                                playQuestion(currentIndex);
+                            if (!audioPlayer.src || audioPlayer.ended) {{
+                                prepareAudio(currentQIndex);
+                                playChunk(currentChunkIndex);
                             }} else {{
-                                jumpToPart(); // 화면만 갱신
+                                audioPlayer.play();
+                                document.getElementById('qTitle').innerText = `📝 문제 ${{questions[currentQIndex].id}}번 (재생 중 🔊)`;
                             }}
+                        }}
+                        updateBtn();
+                    }}
+
+                    function nextQuestion(isAutoPlay = false) {{
+                        if (currentQIndex < questions.length - 1) {{
+                            currentQIndex++;
+                            renderQuestion(currentQIndex);
+                            prepareAudio(currentQIndex);
+                            if (isPlaying || isAutoPlay) {{
+                                isPlaying = true;
+                                setTimeout(() => playChunk(0), 500); // 0.5초 대기 후 다음 문제 재생
+                            }}
+                            updateBtn();
+                        }} else {{
+                            isPlaying = false;
+                            updateBtn();
+                            document.getElementById('qTitle').innerText = "🎉 모든 문제 재생 완료!";
                         }}
                     }}
 
                     function prevQuestion() {{
-                        if(currentIndex > 0) {{
-                            currentIndex--;
-                            selectEl.value = Math.floor(currentIndex / 10) * 10;
-                            if(isPlaying) {{
-                                audioPlayer.pause();
-                                chunkQueue = [];
-                                playQuestion(currentIndex);
-                            }} else {{
-                                jumpToPart(); // 화면만 갱신
-                            }}
+                        if (currentQIndex > 0) {{
+                            currentQIndex--;
+                            renderQuestion(currentQIndex);
+                            prepareAudio(currentQIndex);
+                            if (isPlaying) playChunk(0);
+                            updateBtn();
                         }}
                     }}
 
-                    function updateUI() {{
+                    function jumpToPart() {{
+                        currentQIndex = parseInt(selectEl.value);
+                        renderQuestion(currentQIndex);
+                        prepareAudio(currentQIndex);
+                        if (isPlaying) playChunk(0);
+                    }}
+
+                    function updateBtn() {{
                         const btn = document.getElementById('playBtn');
                         if (isPlaying) {{
                             btn.innerHTML = "⏹️ 일시 정지";
@@ -803,6 +815,14 @@ elif menu == "📚 핵심 문제 DB":
                             btn.className = "btn-play";
                         }}
                     }}
+
+                    // 🚨 페이지 로드 시 즉시 1번 문제 렌더링 (빈 화면 방지)
+                    window.onload = () => {{
+                        if(questions.length > 0) {{
+                            renderQuestion(0);
+                            prepareAudio(0);
+                        }}
+                    }};
                 </script>
             </body>
             </html>
