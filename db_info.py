@@ -2,9 +2,9 @@ import streamlit as st
 import random
 import re
 import base64
-import io
+import asyncio
 import streamlit.components.v1 as components
-from gtts import gTTS  # 깃허브 requirements.txt를 통해 자동 설치됨
+from edge_tts import Communicate  # 마이크로소프트 고음질 AI 음성
 
 # ==========================================
 # [초기 설정] 페이지 세팅
@@ -41,7 +41,7 @@ apply_modern_ui()
 # ==========================================
 # [데이터베이스] 기출/예상문제
 # ==========================================
-# 선생님, 아래 대괄호 [ ] 안에 문제 데이터를 붙여넣어 주세요!
+# 🚨 선생님, 아래 대괄호 [ ] 안에 417개의 문제 데이터를 꼭 붙여넣어 주세요!
 QUESTIONS = [
     {"id": 1, "q": "산업안전지도사의 직무에 대해 말해보세요?", "a": "산업안전지도사란 산안법에 따라 사업장 내 근본적인 안전보건상의 문제점을 개선하는데 도움을 받고자 임명한 외부전문가를 말합니다.\n\n산업안전지도사의 직무는 산안법 제142조에 근거하여\n1. 공정상의 안전평가·지도\n2. 유해위험방지대책 평가·지도\n3. 공정안전 및 유해위험방지 대책과 관련된 계획서와 보고서 작성\n4. 위험성평가 지도\n5. 안전보건개선계획서 작성\n6. 그 밖의 산업안전에 관한 자문에 대한 응답, 조언\n\n*Tip : 공.유.계보.위.개.자"},
     {"id": 2, "q": "산업안전지도사 기계분야의 직무에 대해 말해보세요?", "a": "산안법 제145조 제1항에 따라 등록한 기계안전지도사의 업무범위는\n1. 유해위험방지계획서, 안전보건개선계획서, 공정안전보고서, 기계기구설비의 작업계획서 및 MSDS 작성 지도\n2. 정전기·전자파로 인한 재해예방, 자동화 및 자동제어설비, 방폭전기설비 및 전력시스템 등 기술지도\n3. 전기, 기계기구설비, 화학설비 및 공정에 대한 설계·시공·배치·유지보수에 관한 안전성평가 및 기술지도\n4. 인화성가스, 액체, 폭발성물질, 급성독성 물질 및 방폭설비 등에 관한 안전성평가 및 기술지도\n5. 크레인 등 기계·기구, 전기작업의 안전성평가\n6. 그 밖의 교육 또는 기술지도 업무\n\n*Tip : 유.정.전.인.크"},
@@ -552,7 +552,7 @@ elif menu == "📚 핵심 문제 DB":
 
     with tab_audio:
         st.subheader("📺 유튜브형 연속 재생 모드 (설거지/운전용)")
-        st.markdown("실제 오디오 파일(MP3)을 생성하여 **유튜브처럼 완벽한 진행바(Seek Bar)**를 제공합니다. 재생이 끝나면 자동으로 다음 파트로 넘어갑니다.")
+        st.markdown("고음질 AI 아나운서 음성으로 **유튜브처럼 완벽한 진행바(Seek Bar)**를 제공합니다. 재생이 끝나면 자동으로 다음 파트로 넘어갑니다.")
         
         if not QUESTIONS:
             st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
@@ -586,20 +586,31 @@ elif menu == "📚 핵심 문제 DB":
             text_to_read = f"파트 {st.session_state.current_part} 시작합니다. "
             for q in current_questions:
                 plain_a = re.sub(r'[*_~]', '', q['a']) # 특수문자 제거
-                text_to_read += f"문제 {q['id']}번. {q['q']}. 답변입니다. {plain_a} "
+                text_to_read += f"문제 {q['id']}번. {q['q']} 답변입니다. {plain_a} "
             text_to_read += "이번 파트가 끝났습니다. 잠시 후 다음 파트로 넘어갑니다."
 
-            # 🚨 오디오 생성 함수 (캐싱하여 한 번 만든 파트는 0.1초만에 로딩됨)
+            # 🚨 오디오 생성 함수 (마이크로소프트 고음질 AI 음성)
             @st.cache_data(show_spinner=False)
             def generate_audio_file(text):
-                tts = gTTS(text=text, lang='ko', slow=False)
-                fp = io.BytesIO()
-                tts.write_to_fp(fp)
-                fp.seek(0)
-                return fp.read()
+                async def amain():
+                    # ko-KR-SunHiNeural: 맑고 또렷한 한국어 여성 AI 아나운서 음성
+                    communicate = Communicate(text, "ko-KR-SunHiNeural")
+                    audio_bytes = b""
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio":
+                            audio_bytes += chunk["data"]
+                    return audio_bytes
+                
+                # 스트림릿 환경에서 에러 없이 안전하게 실행하기 위한 코드
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(amain())
+                finally:
+                    loop.close()
 
             # 오디오 생성 및 인코딩
-            with st.spinner(f"파트 {st.session_state.current_part} 오디오를 생성 중입니다... (최초 1회만 약 5~10초 소요)"):
+            with st.spinner(f"파트 {st.session_state.current_part} 고음질 AI 오디오를 생성 중입니다... (최초 1회만 약 5~10초 소요)"):
                 audio_bytes = generate_audio_file(text_to_read)
                 b64_audio = base64.b64encode(audio_bytes).decode()
 
@@ -674,4 +685,4 @@ elif menu == "🎤 AI 실전 모의면접":
         
         if st.button("💡 모범답안 확인하기", type="primary"):
             st.markdown("### 💡 모범 답안")
-            st.success(st.session_state.current_q['a'])
+            st.success(st.session_state.current_q
