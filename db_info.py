@@ -829,44 +829,6 @@ with tab_audio:
             
             st.success("모든 문제 재생이 완료되었습니다!")
 
-            
-            # ==========================================
-            # 2. 개별 문제 듣기 기능
-            # ==========================================
-            st.markdown("### 🔢 번호별 선택 듣기")
-            selected_id = st.selectbox(
-                "듣고 싶은 문제 번호를 선택하세요:", 
-                options=[item["id"] for item in QUESTIONS],
-                format_func=lambda x: f"문제 {x}번"
-            )
-            
-            # 선택된 문제 찾기
-            selected_item = next(item for item in QUESTIONS if item["id"] == selected_id)
-            
-            st.markdown(f"**Q. {selected_item['q']}**")
-            st.markdown(f"> A. {selected_item['a']}")
-            
-            # 버튼을 누르면 실시간으로 음성을 생성하여 재생
-            if st.button("▶️ 이 문제 음성으로 듣기"):
-                with st.spinner("음성을 생성 중입니다..."):
-                    try:
-                        # 읽어줄 텍스트 만들기
-                        text_to_read = f"질문입니다. {selected_item['q']} 답변입니다. {selected_item['a']}"
-                        
-                        # gTTS를 이용해 실시간으로 음성 데이터 생성
-                        tts = gTTS(text=text_to_read, lang='ko', slow=False)
-                        audio_fp = io.BytesIO()
-                        tts.write_to_fp(audio_fp)
-                        audio_fp.seek(0)
-                        
-                        # 생성된 음성 재생
-                        st.audio(audio_fp, format="audio/mp3")
-                    except Exception as e:
-                        st.error(f"음성 생성 중 오류가 발생했습니다: {e}")
-        else:
-            st.warning("데이터가 없습니다. 코드 상단의 QUESTIONS 배열에 데이터를 넣어주세요.")
-
-
 # ==========================================
 # 6. AI 실전 모의면접
 # ==========================================
