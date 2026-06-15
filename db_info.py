@@ -5,6 +5,8 @@ import io
 import requests
 import urllib.parse
 import re
+import json  # 🚨 NameError 해결을 위해 추가
+import streamlit.components.v1 as components  # 🚨 HTML 플레이어 렌더링을 위해 추가
 
 # ==========================================
 # [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
@@ -566,6 +568,7 @@ QUESTIONS = [
 
     
 ]
+
 # ==========================================
 # [사이드바 네비게이션]
 # ==========================================
@@ -604,7 +607,7 @@ st.sidebar.info("💡 **Tip:** 면접은 10점 만점에 6점 이상이면 합�
 # 0. 홈 (가상 면접장)
 # ==========================================
 if menu == "🏠 홈 (가상 면접장)":
-    st.title("🏢 산업안전지도사 가상 면접장")
+    st.title("🏢 산업안전지도 가상 면접장")
     st.markdown("면접관이 당신의 답변을 기다리고 있습니다. 편안한 마음으로 답변해 주세요.")
     st.divider()
 
@@ -785,7 +788,7 @@ elif menu == "🗣️ 모범답변 예시":
 
 
 # ==========================================
-# 5. 핵심 문제 DB (모바일 완벽 호환 + 여성 음성 플레이어 탑재)
+# 5. 핵심 문제 DB (모바일 완벽 호환 + 기본 음성 플레이어 탑재)
 # ==========================================
 elif menu == "📚 핵심 문제 DB":
     st.title("📚 핵심 문제 DB")
@@ -806,7 +809,7 @@ elif menu == "📚 핵심 문제 DB":
     # --- 탭 2: 동영상 재생 모드 (모바일 전용 플레이어) ---
     with tab_audio:
         st.subheader("📺 모바일 최적화 동영상 재생 모드")
-        st.markdown("휴대폰 화면이 켜진 상태에서 **아래의 재생 버튼을 누르면 여성 음성으로 끊김 없이 연속 재생**됩니다.")
+        st.markdown("휴대폰 화면이 켜진 상태에서 **아래의 재생 버튼을 누르면 끊김 없이 연속 재생**됩니다.")
         
         if not QUESTIONS:
             st.warning("재생할 문제가 없습니다. 코드의 QUESTIONS 리스트에 데이터를 넣어주세요.")
@@ -842,7 +845,7 @@ elif menu == "📚 핵심 문제 DB":
             
             questions_json = json.dumps(js_questions, ensure_ascii=False)
             
-            # 🚨 [핵심] 모바일 자동재생 및 여성 음성을 지원하는 HTML/JS 플레이어 🚨
+            # 🚨 [핵심] 모바일 자동재생 및 속도 조절을 지원하는 HTML/JS 플레이어 🚨
             html_player = f"""
             <!DOCTYPE html>
             <html>
@@ -862,25 +865,19 @@ elif menu == "📚 핵심 문제 DB":
             <body>
                 <div id="app" class="player-box">
                     <button class="btn-play" onclick="startPlay()">▶️ {selected_part} 재생 시작</button>
-                    <p style="margin-top:20px; color:#666; font-size:16px;">버튼을 누르면 기기에 내장된 <b>여성 음성</b>으로 연속 재생됩니다.<br>(휴대폰 화면이 꺼지지 않게 유지해주세요)</p>
+                    <p style="margin-top:20px; color:#666; font-size:16px;">버튼을 누르면 기기에 내장된 <b>기본 음성(1.15배속)</b>으로 연속 재생됩니다.<br>(휴대폰 화면이 꺼지지 않게 유지해주세요)</p>
                 </div>
 
                 <script>
                     const questions = {questions_json};
                     let currentIndex = 0;
 
-                    // 기기 내장 한국어 여성 음성 찾기
-                    function getFemaleVoice() {{
+                    // 기기 내장 한국어 기본 음성 찾기 (남성 선호, 없으면 기본)
+                    function getKoreanVoice() {{
                         const voices = window.speechSynthesis.getVoices();
                         const koVoices = voices.filter(v => v.lang.includes('ko'));
                         
-                        // 1순위: 이름에 여성, Female, Yuna(아이폰), Sora 등이 들어간 음성
-                        let voice = koVoices.find(v => v.name.includes('Yuna') || v.name.includes('Sora') || v.name.includes('Female') || v.name.includes('여성'));
-                        // 2순위: 삼성/구글 기본 음성 (대부분 기본이 여성임)
-                        if (!voice && koVoices.length > 0) {{
-                            voice = koVoices.find(v => v.name.includes('Google') || v.name.includes('Samsung'));
-                        }}
-                        // 3순위: 아무 한국어 음성
+                        let voice = koVoices.find(v => v.name.includes('Male') || v.name.includes('남성'));
                         if (!voice && koVoices.length > 0) voice = koVoices[0];
                         
                         return voice;
@@ -933,9 +930,11 @@ elif menu == "📚 핵심 문제 DB":
 
                             const utterance = new SpeechSynthesisUtterance(text);
                             utterance.lang = 'ko-KR';
-                            utterance.rate = 0.95; // 약간 또박또박하게 속도 조절
                             
-                            const voice = getFemaleVoice();
+                            // 💡 속도 조절: 1.15배속으로 약간 빠르게 설정
+                            utterance.rate = 1.15; 
+                            
+                            const voice = getKoreanVoice();
                             if (voice) utterance.voice = voice;
 
                             utterance.onend = () => {{
@@ -956,7 +955,7 @@ elif menu == "📚 핵심 문제 DB":
                     }}
 
                     // 크롬/사파리 음성 목록 사전 로드
-                    window.speechSynthesis.onvoiceschanged = getFemaleVoice;
+                    window.speechSynthesis.onvoiceschanged = getKoreanVoice;
                 </script>
             </body>
             </html>
