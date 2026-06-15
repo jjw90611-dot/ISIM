@@ -12,7 +12,7 @@ from edge_tts import Communicate  # 마이크로소프트 고음질 AI 음성
 st.set_page_config(page_title="산업안전지도사 면접 마스터", page_icon="🏢", layout="wide")
 
 # ==========================================
-# 🎨 2026 모던 UI 디자인 적용
+# 🎨 2026 모던 UI 디자인 적용 (수정됨)
 # ==========================================
 def apply_modern_ui():
     st.markdown("""
@@ -22,9 +22,20 @@ def apply_modern_ui():
         src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SeoulNamsanM.woff') format('woff');
         font-weight: normal; font-style: normal;
     }
-    html, body, [class*="css"], [class*="st-"], p, div, span, button, input, select {
-        font-family: 'SeoulNamsanM', sans-serif; font-size: 18px; line-height: 1.7; color: #2C3E50; 
+    
+    /* 🚨 수정 1: span과 [class*="st-"]를 제외하여 아이콘이 글자로 깨지는 현상 방지 */
+    html, body, p, div, button, input, select, h1, h2, h3, h4, h5, h6 {
+        font-family: 'SeoulNamsanM', sans-serif; 
+        font-size: 18px; 
+        line-height: 1.7; 
+        color: #2C3E50; 
     }
+    
+    /* 🚨 수정 2: Streamlit 기본 아이콘(Material Symbols) 폰트 강제 보호 */
+    .material-symbols-rounded, [class*="icon"] {
+        font-family: 'Material Symbols Rounded' !important;
+    }
+
     .stApp { background-color: #F8F9FA; }
     .stButton > button {
         background-color: #005AAB !important; color: #FFFFFF !important; border-radius: 8px !important; border: none !important; padding: 10px 24px !important; font-weight: bold !important; font-size: 18px !important; transition: all 0.3s ease !important; box-shadow: 0 4px 6px rgba(0, 90, 171, 0.2) !important;
