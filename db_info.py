@@ -5,8 +5,8 @@ import io
 import requests
 import urllib.parse
 import re
-import json  # 🚨 NameError 해결을 위해 추가
-import streamlit.components.v1 as components  # 🚨 HTML 플레이어 렌더링을 위해 추가
+import json
+import streamlit.components.v1 as components
 
 # ==========================================
 # [초기 설정] 페이지 세팅 (반드시 가장 먼저 선언!)
