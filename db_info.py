@@ -685,4 +685,4 @@ elif menu == "🎤 AI 실전 모의면접":
         
         if st.button("💡 모범답안 확인하기", type="primary"):
             st.markdown("### 💡 모범 답안")
-            st.success(st.session_state.current_q['a']
+            st.success(st.session_state.current_q['a'])
